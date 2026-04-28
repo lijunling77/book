@@ -81,27 +81,20 @@ export class BookService {
       throw new Error(ERROR_MESSAGES.BOOK_NOT_FOUND);
     }
 
-    const stockRecords = db
-      .select({
-        stockId: stock.id,
-        locationId: stock.locationId,
-        quantity: stock.quantity,
-      })
-      .from(stock)
-      .where(eq(stock.bookId, id))
-      .all();
-
-    const nonZeroStock = stockRecords.filter((s) => s.quantity > 0);
-    if (nonZeroStock.length > 0) {
-      const error = new Error(ERROR_MESSAGES.BOOK_HAS_STOCK) as Error & { stockList?: unknown[] };
-      error.stockList = nonZeroStock;
-      throw error;
+    // 检查是否有入库记录
+    const inboundCount = db.select({ count: count() }).from(inboundRecords).where(eq(inboundRecords.bookId, id)).get();
+    if (inboundCount && inboundCount.count > 0) {
+      throw new Error('该书籍有交易记录，无法删除');
     }
 
-    // 在事务中删除所有关联数据
+    // 检查是否有出库记录
+    const outboundCount = db.select({ count: count() }).from(outboundRecords).where(eq(outboundRecords.bookId, id)).get();
+    if (outboundCount && outboundCount.count > 0) {
+      throw new Error('该书籍有交易记录，无法删除');
+    }
+
+    // 没有交易记录，安全删除
     const transaction = sqliteDb.transaction(() => {
-      db.delete(inboundRecords).where(eq(inboundRecords.bookId, id)).run();
-      db.delete(outboundRecords).where(eq(outboundRecords.bookId, id)).run();
       db.delete(stock).where(eq(stock.bookId, id)).run();
       db.delete(books).where(eq(books.id, id)).run();
     });
