@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, InputNumber, DatePicker, Select, Button, Space, message } from 'antd';
+import { Modal, Form, Input, InputNumber, DatePicker, Select, AutoComplete, Button, Space, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Book, InboundRecord, CreateInboundInput, UpdateInboundInput } from '../../shared/types';
-import { bookApi, inboundApi } from '../utils/ipc';
+import { bookApi, inboundApi, locationDictApi } from '../utils/ipc';
 
 interface InboundFormProps {
   open: boolean;
@@ -16,13 +16,19 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
   const [form] = Form.useForm();
   const isEdit = !!record;
   const [books, setBooks] = useState<Book[]>([]);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [quickBookOpen, setQuickBookOpen] = useState(false);
   const [quickBookTitle, setQuickBookTitle] = useState('');
+  const [quickBookLocation, setQuickBookLocation] = useState('');
   const [quickBookLoading, setQuickBookLoading] = useState(false);
+  const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
     if (open) {
       loadBooks();
+      locationDictApi.list().then((locs) => {
+        setLocationOptions(locs.map((l) => ({ value: l.name, label: l.name })));
+      }).catch(() => {});
       if (record) {
         form.setFieldsValue({
           bookId: record.bookId,
@@ -30,9 +36,17 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
           quantity: record.quantity,
           purchasePrice: record.purchasePrice,
           supplier: record.supplier ?? '',
+          location: '',
         });
+        // 加载选中书籍的当前位置
+        const book = books.find((b) => b.id === record.bookId);
+        if (book) {
+          setSelectedBook(book);
+          form.setFieldValue('location', book.location ?? '');
+        }
       } else {
         form.resetFields();
+        setSelectedBook(null);
       }
     }
   }, [open, record, form]);
@@ -44,20 +58,38 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
     if (!title) { message.warning('请输入书名'); return; }
     setQuickBookLoading(true);
     try {
-      const created = await bookApi.create({ title });
+      const created = await bookApi.create({ title, location: quickBookLocation || null });
       message.success('书籍创建成功');
       await loadBooks();
       form.setFieldValue('bookId', created.id);
       setQuickBookOpen(false);
       setQuickBookTitle('');
+      setQuickBookLocation('');
     } catch (err) { message.error(err instanceof Error ? err.message : '创建书籍失败'); }
     finally { setQuickBookLoading(false); }
+  };
+
+  const handleBookChange = (bookId: string) => {
+    const book = books.find((b) => b.id === bookId);
+    setSelectedBook(book ?? null);
+    if (book) {
+      form.setFieldValue('location', book.location ?? '');
+    }
   };
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
       const dateStr = values.inboundDate ? values.inboundDate.format('YYYY-MM-DD') : '';
+      const bookId = isEdit && record ? record.bookId : values.bookId;
+
+      // 如果位置有变化，更新书籍位置
+      const newLocation = values.location?.trim() || null;
+      const currentBook = books.find((b) => b.id === bookId);
+      if (currentBook && newLocation !== (currentBook.location ?? null)) {
+        await bookApi.update(bookId, { location: newLocation });
+      }
+
       if (isEdit && record) {
         const updateData: UpdateInboundInput = { inboundDate: dateStr, quantity: values.quantity, purchasePrice: values.purchasePrice, supplier: values.supplier || null };
         await inboundApi.update(record.id, updateData);
@@ -79,10 +111,18 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
           <Form.Item label="书籍" required style={{ marginBottom: 0 }}>
             <Space.Compact style={{ width: '100%' }}>
               <Form.Item name="bookId" noStyle rules={[{ required: true, message: '请选择书籍' }]}>
-                <Select placeholder="请选择书籍" showSearch optionFilterProp="label" disabled={isEdit} style={{ flex: 1 }} options={books.map((b) => ({ value: b.id, label: b.title }))} />
+                <Select placeholder="请选择书籍" showSearch optionFilterProp="label" disabled={isEdit} onChange={handleBookChange} style={{ flex: 1 }} options={books.map((b) => ({ value: b.id, label: b.title }))} />
               </Form.Item>
               {!isEdit && <Button icon={<PlusOutlined />} onClick={() => setQuickBookOpen(true)}>快速新增</Button>}
             </Space.Compact>
+          </Form.Item>
+          <Form.Item name="location" label="存放位置">
+            <AutoComplete
+              placeholder="选择或输入位置（可选）"
+              options={locationOptions}
+              filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+              allowClear
+            />
           </Form.Item>
           <Form.Item name="inboundDate" label="入库日期" rules={[{ required: true, message: '请选择入库日期' }]}><DatePicker style={{ width: '100%' }} /></Form.Item>
           <Form.Item name="quantity" label="数量" rules={[{ required: true, message: '请输入数量' }, { type: 'number', min: 1, message: '数量必须大于0' }]}><InputNumber min={1} style={{ width: '100%' }} placeholder="请输入数量" /></Form.Item>
@@ -90,8 +130,22 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
           <Form.Item name="supplier" label="供应商"><Input placeholder="请输入供应商（可选）" /></Form.Item>
         </Form>
       </Modal>
-      <Modal title="快速新增书籍" open={quickBookOpen} onOk={handleQuickCreateBook} onCancel={() => { setQuickBookOpen(false); setQuickBookTitle(''); }} confirmLoading={quickBookLoading} width={400} destroyOnClose>
-        <Form layout="vertical"><Form.Item label="书名" required><Input placeholder="请输入书名" value={quickBookTitle} onChange={(e) => setQuickBookTitle(e.target.value)} onPressEnter={handleQuickCreateBook} /></Form.Item></Form>
+      <Modal title="快速新增书籍" open={quickBookOpen} onOk={handleQuickCreateBook} onCancel={() => { setQuickBookOpen(false); setQuickBookTitle(''); setQuickBookLocation(''); }} confirmLoading={quickBookLoading} width={480} destroyOnClose>
+        <Form layout="vertical">
+          <Form.Item label="书名" required>
+            <Input placeholder="请输入书名" value={quickBookTitle} onChange={(e) => setQuickBookTitle(e.target.value)} />
+          </Form.Item>
+          <Form.Item label="存放位置">
+            <AutoComplete
+              placeholder="选择或输入位置（可选）"
+              options={locationOptions}
+              value={quickBookLocation}
+              onChange={setQuickBookLocation}
+              filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+              allowClear
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </>
   );
