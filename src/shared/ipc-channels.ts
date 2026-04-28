@@ -78,6 +78,7 @@ export const PRICE_CHANNELS = {
 export const PROFIT_CHANNELS = {
   BY_BOOK: 'profit:byBook',
   MONTHLY: 'profit:monthly',
+  YEARLY: 'profit:yearly',
 } as const;
 
 // ============================================================

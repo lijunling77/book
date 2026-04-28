@@ -18,6 +18,16 @@ export interface MonthlyProfit {
   netProfit: number;
 }
 
+/** 年度利润 */
+export interface YearlyProfit {
+  year: string;
+  inboundQuantity: number;
+  outboundQuantity: number;
+  totalPurchaseCost: number;
+  totalSalesRevenue: number;
+  netProfit: number;
+}
+
 export class ProfitService {
   calculateByBook(bookId: string, dateRange?: DateRange): ProfitDetail {
     const db = getDatabase();
@@ -116,6 +126,59 @@ export class ProfitService {
 
     return months.map(([month, data]) => ({
       month,
+      inboundQuantity: data.inboundQty,
+      outboundQuantity: data.outboundQty,
+      totalPurchaseCost: data.cost,
+      totalSalesRevenue: data.revenue,
+      netProfit: data.revenue - data.cost,
+    }));
+  }
+
+  /**
+   * 按年统计利润
+   */
+  calculateYearly(): YearlyProfit[] {
+    const db = getDatabase();
+
+    const yearlyCosts = db
+      .select({
+        year: sql<string>`SUBSTR(${inboundRecords.inboundDate}, 1, 4)`,
+        totalCost: sql<number>`COALESCE(SUM(${inboundRecords.purchasePrice} * ${inboundRecords.quantity}), 0)`,
+        totalQuantity: sql<number>`COALESCE(SUM(${inboundRecords.quantity}), 0)`,
+      })
+      .from(inboundRecords)
+      .groupBy(sql`SUBSTR(${inboundRecords.inboundDate}, 1, 4)`)
+      .all();
+
+    const yearlyRevenues = db
+      .select({
+        year: sql<string>`SUBSTR(${outboundRecords.outboundDate}, 1, 4)`,
+        totalRevenue: sql<number>`COALESCE(SUM(${outboundRecords.sellingPrice} * ${outboundRecords.quantity}), 0)`,
+        totalQuantity: sql<number>`COALESCE(SUM(${outboundRecords.quantity}), 0)`,
+      })
+      .from(outboundRecords)
+      .groupBy(sql`SUBSTR(${outboundRecords.outboundDate}, 1, 4)`)
+      .all();
+
+    const yearMap = new Map<string, { cost: number; revenue: number; inboundQty: number; outboundQty: number }>();
+
+    for (const row of yearlyCosts) {
+      yearMap.set(row.year, { cost: row.totalCost, revenue: 0, inboundQty: row.totalQuantity, outboundQty: 0 });
+    }
+    for (const row of yearlyRevenues) {
+      const existing = yearMap.get(row.year);
+      if (existing) {
+        existing.revenue = row.totalRevenue;
+        existing.outboundQty = row.totalQuantity;
+      } else {
+        yearMap.set(row.year, { cost: 0, revenue: row.totalRevenue, inboundQty: 0, outboundQty: row.totalQuantity });
+      }
+    }
+
+    const years = Array.from(yearMap.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+
+    return years.map(([year, data]) => ({
+      year,
       inboundQuantity: data.inboundQty,
       outboundQuantity: data.outboundQty,
       totalPurchaseCost: data.cost,
