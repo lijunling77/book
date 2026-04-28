@@ -12,6 +12,8 @@ import {
   stock,
   books,
   locations,
+  inboundRecords,
+  outboundRecords,
 } from '../db/schema';
 import {
   ERROR_MESSAGES,
@@ -196,11 +198,41 @@ export class StocktakingService {
         .all();
 
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      const today = now.substring(0, 10);
 
       for (const item of items) {
         if (item.actualQuantity === null) continue;
         if (item.variance !== null && item.variance !== 0) {
+          // 调整库存
           stockService.adjustStock(item.bookId, item.locationId, item.variance);
+
+          if (item.variance > 0) {
+            // 盘盈：生成入库记录（价格为0，供应商标记为盘点调整）
+            db.insert(inboundRecords).values({
+              id: uuidv4(),
+              bookId: item.bookId,
+              locationId: item.locationId,
+              inboundDate: today,
+              quantity: item.variance,
+              purchasePrice: 0,
+              supplier: '盘点调整（盘盈）',
+              createdAt: now,
+              updatedAt: now,
+            }).run();
+          } else {
+            // 盘亏：生成出库记录（价格为0，买家标记为盘点调整）
+            db.insert(outboundRecords).values({
+              id: uuidv4(),
+              bookId: item.bookId,
+              locationId: item.locationId,
+              outboundDate: today,
+              quantity: Math.abs(item.variance),
+              sellingPrice: 0,
+              buyer: '盘点调整（盘亏）',
+              createdAt: now,
+              updatedAt: now,
+            }).run();
+          }
         }
       }
 
