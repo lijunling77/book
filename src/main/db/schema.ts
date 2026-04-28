@@ -91,6 +91,16 @@ export const stocktakingItems = sqliteTable('stocktaking_items', {
 });
 
 // ============================================================
+// 位置字典表
+// ============================================================
+
+export const locationDict = sqliteTable('location_dict', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
+});
+
+// ============================================================
 // 备份信息表
 // ============================================================
 

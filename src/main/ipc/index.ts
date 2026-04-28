@@ -14,6 +14,7 @@ import { registerBackupIpcHandlers } from './backup.ipc';
 import { registerExportIpcHandlers } from './export.ipc';
 import { registerImportIpcHandlers } from './import.ipc';
 import { registerReportIpcHandlers } from './report.ipc';
+import { registerLocationDictIpcHandlers } from './location-dict.ipc';
 
 export function registerAllIpcHandlers(): void {
   registerBookIpcHandlers();
@@ -28,4 +29,5 @@ export function registerAllIpcHandlers(): void {
   registerExportIpcHandlers();
   registerImportIpcHandlers();
   registerReportIpcHandlers();
+  registerLocationDictIpcHandlers();
 }

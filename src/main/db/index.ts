@@ -75,6 +75,12 @@ const CREATE_TABLES_SQL = `
     status TEXT
   );
 
+  CREATE TABLE IF NOT EXISTS location_dict (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );
+
   CREATE TABLE IF NOT EXISTS backup_info (
     id TEXT PRIMARY KEY,
     file_path TEXT NOT NULL,

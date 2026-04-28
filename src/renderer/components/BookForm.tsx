@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, message } from 'antd';
+import { Modal, Form, Input, AutoComplete, message } from 'antd';
 import type { Book, CreateBookInput, UpdateBookInput } from '../../shared/types';
-import { bookApi } from '../utils/ipc';
+import { bookApi, locationDictApi } from '../utils/ipc';
 
 interface BookFormProps {
   open: boolean;
@@ -14,9 +14,16 @@ const BookForm: React.FC<BookFormProps> = ({ open, book, onClose, onSuccess }) =
   const [form] = Form.useForm();
   const isEdit = !!book;
   const [submitting, setSubmitting] = useState(false);
+  const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
     if (open) {
+      locationDictApi.list().then((locations) => {
+        setLocationOptions(locations.map((loc) => ({ value: loc.name, label: loc.name })));
+      }).catch(() => {
+        // silently ignore - user can still type freely
+      });
+
       if (book) {
         form.setFieldsValue({
           title: book.title,
@@ -89,7 +96,14 @@ const BookForm: React.FC<BookFormProps> = ({ open, book, onClose, onSuccess }) =
           <Input placeholder="请输入作者（可选）" />
         </Form.Item>
         <Form.Item name="location" label="存放位置">
-          <Input placeholder="请输入存放位置（可选），如 A架3层" />
+          <AutoComplete
+            placeholder="选择或输入位置（可选），如 A架3层"
+            options={locationOptions}
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            allowClear
+          />
         </Form.Item>
         <Form.Item name="description" label="描述">
           <Input.TextArea rows={2} placeholder="请输入描述（可选）" />

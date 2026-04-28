@@ -16,6 +16,7 @@ import ExportData from './pages/ExportData';
 import ImportBooks from './pages/ImportBooks';
 import BackupRestore from './pages/BackupRestore';
 import Report from './pages/Report';
+import LocationDict from './pages/LocationDict';
 
 const eyeCareTheme = {
   token: {
@@ -82,6 +83,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="books" element={<BookList />} />
+            <Route path="locations" element={<LocationDict />} />
             <Route path="inbound" element={<InboundList />} />
             <Route path="outbound" element={<OutboundList />} />
             <Route path="stock" element={<StockList />} />

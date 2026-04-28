@@ -14,6 +14,7 @@ import {
   UploadOutlined,
   SaveOutlined,
   BarChartOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -22,6 +23,7 @@ type MenuItem = Required<MenuProps>['items'][number];
 const menuItems: MenuItem[] = [
   { key: '/', icon: <DashboardOutlined />, label: '仪表盘' },
   { key: '/books', icon: <BookOutlined />, label: '书籍管理' },
+  { key: '/locations', icon: <EnvironmentOutlined />, label: '位置管理' },
   { key: '/inbound', icon: <ImportOutlined />, label: '入库管理' },
   { key: '/outbound', icon: <ExportOutlined />, label: '出库管理' },
   { key: '/stock', icon: <DatabaseOutlined />, label: '库存查询' },

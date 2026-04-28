@@ -121,6 +121,16 @@ export const IMPORT_CHANNELS = {
 } as const;
 
 // ============================================================
+// 位置字典
+// ============================================================
+
+export const LOCATION_DICT_CHANNELS = {
+  LIST: 'locationDict:list',
+  CREATE: 'locationDict:create',
+  DELETE: 'locationDict:delete',
+} as const;
+
+// ============================================================
 // 综合报表
 // ============================================================
 
@@ -145,5 +155,6 @@ export const ALL_CHANNELS = {
   ...BACKUP_CHANNELS,
   ...EXPORT_CHANNELS,
   ...IMPORT_CHANNELS,
+  ...LOCATION_DICT_CHANNELS,
   ...REPORT_CHANNELS,
 } as const;

@@ -15,6 +15,7 @@ import {
   EXPORT_CHANNELS,
   IMPORT_CHANNELS,
   REPORT_CHANNELS,
+  LOCATION_DICT_CHANNELS,
 } from '../../shared/ipc-channels';
 
 import type {
@@ -52,6 +53,7 @@ import type {
   ImportFileFormat,
   ImportResultSummary,
   ProfitFilter,
+  LocationDict,
 } from '../../shared/types';
 
 interface IpcErrorResponse {
@@ -146,4 +148,10 @@ export const importApi = {
 export const reportApi = {
   getData: (dateRange?: DateRange): Promise<unknown> => invoke(REPORT_CHANNELS.GET_DATA, dateRange),
   export: (dateRange?: DateRange, format?: ExportFormat): Promise<{ filePath?: string; canceled?: boolean }> => invoke(REPORT_CHANNELS.EXPORT, dateRange, format),
+};
+
+export const locationDictApi = {
+  list: (): Promise<LocationDict[]> => invoke(LOCATION_DICT_CHANNELS.LIST),
+  create: (name: string): Promise<LocationDict> => invoke(LOCATION_DICT_CHANNELS.CREATE, name),
+  delete: (id: string): Promise<void> => invoke(LOCATION_DICT_CHANNELS.DELETE, id),
 };
