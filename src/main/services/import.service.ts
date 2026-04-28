@@ -93,6 +93,12 @@ export class ImportService {
           throw new Error('书名不能为空');
         }
 
+        // 校验书名唯一性
+        const existingBook = db.select().from(books).where(eq(books.title, title)).get();
+        if (existingBook) {
+          throw new Error('该书名已存在');
+        }
+
         const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
         const id = uuidv4();
 

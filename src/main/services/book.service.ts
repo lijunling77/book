@@ -40,6 +40,12 @@ export class BookService {
   create(input: CreateBookInput): Book {
     const db = getDatabase();
 
+    // 校验书名唯一性
+    const existing = db.select().from(books).where(eq(books.title, input.title.trim())).get();
+    if (existing) {
+      throw new Error('该书名已存在');
+    }
+
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
     const id = uuidv4();
 

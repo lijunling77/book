@@ -18,7 +18,7 @@ let sqliteDb: Database.Database | null = null;
 const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS books (
     id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
+    title TEXT NOT NULL UNIQUE,
     author TEXT,
     description TEXT,
     location TEXT,

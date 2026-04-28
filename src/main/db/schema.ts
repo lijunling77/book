@@ -12,7 +12,7 @@ import { sql } from 'drizzle-orm';
 
 export const books = sqliteTable('books', {
   id: text('id').primaryKey(),
-  title: text('title').notNull(),
+  title: text('title').notNull().unique(),
   author: text('author'),
   description: text('description'),
   location: text('location'),
