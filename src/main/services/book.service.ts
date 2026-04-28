@@ -5,8 +5,8 @@
 
 import { eq, like, or, count } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../db';
-import { books, stock } from '../db/schema';
+import { getDatabase, getSqliteDatabase } from '../db';
+import { books, stock, inboundRecords, outboundRecords } from '../db/schema';
 import { ERROR_MESSAGES, DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../shared/constants';
 import type {
   Book,
@@ -74,6 +74,7 @@ export class BookService {
    */
   delete(id: string): void {
     const db = getDatabase();
+    const sqliteDb = getSqliteDatabase();
 
     const existing = db.select().from(books).where(eq(books.id, id)).get();
     if (!existing) {
@@ -97,11 +98,15 @@ export class BookService {
       throw error;
     }
 
-    // 删除关联的库存记录（quantity 为 0 的记录）
-    db.delete(stock).where(eq(stock.bookId, id)).run();
+    // 在事务中删除所有关联数据
+    const transaction = sqliteDb.transaction(() => {
+      db.delete(inboundRecords).where(eq(inboundRecords.bookId, id)).run();
+      db.delete(outboundRecords).where(eq(outboundRecords.bookId, id)).run();
+      db.delete(stock).where(eq(stock.bookId, id)).run();
+      db.delete(books).where(eq(books.id, id)).run();
+    });
 
-    // 删除书籍
-    db.delete(books).where(eq(books.id, id)).run();
+    transaction();
   }
 
   /**
