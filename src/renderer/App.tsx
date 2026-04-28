@@ -19,6 +19,7 @@ import LogList from './pages/LogList';
 import ExportData from './pages/ExportData';
 import ImportBooks from './pages/ImportBooks';
 import BackupRestore from './pages/BackupRestore';
+import Report from './pages/Report';
 
 const App: React.FC = () => {
   return (
@@ -42,6 +43,7 @@ const App: React.FC = () => {
             <Route path="export" element={<ExportData />} />
             <Route path="import" element={<ImportBooks />} />
             <Route path="backup" element={<BackupRestore />} />
+            <Route path="report" element={<Report />} />
           </Route>
         </Routes>
       </HashRouter>

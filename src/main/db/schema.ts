@@ -13,9 +13,9 @@ import { sql } from 'drizzle-orm';
 export const books = sqliteTable('books', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
-  author: text('author').notNull(),
-  isbn: text('isbn').notNull().unique(),
-  category: text('category').notNull(),
+  author: text('author'),
+  isbn: text('isbn').unique(),
+  category: text('category'),
   description: text('description'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
@@ -58,7 +58,7 @@ export const locations = sqliteTable('locations', {
 export const stock = sqliteTable('stock', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').notNull().references(() => editions.id),
+  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   quantity: integer('quantity').notNull().default(0),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
@@ -73,7 +73,7 @@ export const stock = sqliteTable('stock', {
 export const inboundRecords = sqliteTable('inbound_records', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').notNull().references(() => editions.id),
+  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   inboundDate: text('inbound_date').notNull(),
   quantity: integer('quantity').notNull(),
@@ -90,7 +90,7 @@ export const inboundRecords = sqliteTable('inbound_records', {
 export const outboundRecords = sqliteTable('outbound_records', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').notNull().references(() => editions.id),
+  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   outboundDate: text('outbound_date').notNull(),
   quantity: integer('quantity').notNull(),
@@ -159,7 +159,7 @@ export const stocktakingItems = sqliteTable('stocktaking_items', {
   id: text('id').primaryKey(),
   taskId: text('task_id').notNull().references(() => stocktakingTasks.id, { onDelete: 'cascade' }),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').notNull().references(() => editions.id),
+  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   systemQuantity: integer('system_quantity').notNull(),
   actualQuantity: integer('actual_quantity'),

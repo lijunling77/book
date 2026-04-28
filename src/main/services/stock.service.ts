@@ -4,7 +4,7 @@
  * adjustStock 是核心方法，会被 InboundService 和 OutboundService 调用
  */
 
-import { eq, and, like, sql, count } from 'drizzle-orm';
+import { eq, and, like, sql, count, isNull } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db';
 import {
@@ -30,6 +30,17 @@ import type {
   PaginatedResult,
 } from '../../shared/types';
 
+import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
+import type { SQL } from 'drizzle-orm';
+
+/**
+ * Helper to compare a nullable column with a nullable value.
+ * Uses isNull() when value is null, eq() otherwise.
+ */
+function eqNullable(column: SQLiteColumn, value: string | null): SQL {
+  return value === null ? isNull(column) : eq(column, value);
+}
+
 export class StockService {
   /**
    * 查询特定库存单元在特定位置的数量
@@ -38,7 +49,7 @@ export class StockService {
    * @param locationId 位置标识
    * @returns 库存数量，不存在时返回 0
    */
-  getStockQuantity(bookId: string, editionId: string, locationId: string): number {
+  getStockQuantity(bookId: string, editionId: string | null, locationId: string): number {
     const db = getDatabase();
 
     const record = db
@@ -47,7 +58,7 @@ export class StockService {
       .where(
         and(
           eq(stock.bookId, bookId),
-          eq(stock.editionId, editionId),
+          eqNullable(stock.editionId, editionId),
           eq(stock.locationId, locationId),
         ),
       )
@@ -65,7 +76,7 @@ export class StockService {
    * @param locationId 位置标识
    * @param delta 调整量（正数增加，负数减少）
    */
-  adjustStock(bookId: string, editionId: string, locationId: string, delta: number): void {
+  adjustStock(bookId: string, editionId: string | null, locationId: string, delta: number): void {
     const db = getDatabase();
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
@@ -75,7 +86,7 @@ export class StockService {
       .where(
         and(
           eq(stock.bookId, bookId),
-          eq(stock.editionId, editionId),
+          eqNullable(stock.editionId, editionId),
           eq(stock.locationId, locationId),
         ),
       )
@@ -119,7 +130,7 @@ export class StockService {
    * @param editionId 版本标识
    * @returns 总库存数量
    */
-  getTotalStock(bookId: string, editionId: string): number {
+  getTotalStock(bookId: string, editionId: string | null): number {
     const db = getDatabase();
 
     const result = db
@@ -127,7 +138,7 @@ export class StockService {
         total: sql<number>`COALESCE(SUM(${stock.quantity}), 0)`,
       })
       .from(stock)
-      .where(and(eq(stock.bookId, bookId), eq(stock.editionId, editionId)))
+      .where(and(eq(stock.bookId, bookId), eqNullable(stock.editionId, editionId)))
       .get();
 
     return result?.total ?? 0;
@@ -169,7 +180,7 @@ export class StockService {
       .select({ count: count() })
       .from(stock)
       .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(editions, eq(stock.editionId, editions.id))
+      .leftJoin(editions, eq(stock.editionId, editions.id))
       .innerJoin(locations, eq(stock.locationId, locations.id));
 
     if (whereClause) {
@@ -199,7 +210,7 @@ export class StockService {
       })
       .from(stock)
       .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(editions, eq(stock.editionId, editions.id))
+      .leftJoin(editions, eq(stock.editionId, editions.id))
       .innerJoin(locations, eq(stock.locationId, locations.id));
 
     if (whereClause) {
@@ -210,30 +221,32 @@ export class StockService {
 
     // 为每条记录计算价格统计信息和缩略图
     const data: StockView[] = rows.map((row) => {
-      const priceStats = this.getPriceStats(row.bookId, row.editionId);
-      const thumbnailPath = this.getThumbnailPath(row.bookId, row.editionId);
+      const editionId = row.editionId;
+      const priceStats = this.getPriceStats(row.bookId, editionId);
+      const thumbnailPath = this.getThumbnailPath(row.bookId, editionId);
 
       // 计算该库存单元在所有位置的总库存量，用于预警判断
-      const totalStock = this.getTotalStock(row.bookId, row.editionId);
+      const totalStock = this.getTotalStock(row.bookId, editionId);
+      const alertThreshold = row.alertThreshold ?? null;
       const isAlert =
-        row.alertThreshold !== null && totalStock <= row.alertThreshold;
+        alertThreshold !== null && totalStock <= alertThreshold;
 
       return {
         stockId: row.stockId,
         bookId: row.bookId,
-        editionId: row.editionId,
+        editionId,
         locationId: row.locationId,
         bookTitle: row.bookTitle,
         author: row.author,
         isbn: row.isbn,
         category: row.category,
-        editionName: row.editionName,
+        editionName: row.editionName ?? '',
         warehouse: row.warehouse,
         shelf: row.shelf,
         layer: row.layer,
         quantity: row.quantity,
         status: row.quantity === 0 ? STOCK_STATUS.OUT_OF_STOCK : STOCK_STATUS.NORMAL,
-        alertThreshold: row.alertThreshold,
+        alertThreshold,
         isAlert,
         latestPurchasePrice: priceStats.latestPurchasePrice,
         latestSellingPrice: priceStats.latestSellingPrice,
@@ -291,7 +304,7 @@ export class StockService {
       })
       .from(stock)
       .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(editions, eq(stock.editionId, editions.id))
+      .leftJoin(editions, eq(stock.editionId, editions.id))
       .innerJoin(locations, eq(stock.locationId, locations.id));
 
     if (whereClause) {
@@ -303,20 +316,22 @@ export class StockService {
       .all();
 
     return rows.map((row) => {
-      const thumbnailPath = this.getThumbnailPath(row.bookId, row.editionId);
+      const editionId = row.editionId;
+      const thumbnailPath = this.getThumbnailPath(row.bookId, editionId);
+      const alertThreshold = row.alertThreshold ?? null;
       const isAlert =
-        row.alertThreshold !== null && row.totalQuantity <= row.alertThreshold;
+        alertThreshold !== null && row.totalQuantity <= alertThreshold;
 
       return {
         bookId: row.bookId,
-        editionId: row.editionId,
+        editionId,
         bookTitle: row.bookTitle,
         author: row.author,
         isbn: row.isbn,
         category: row.category,
-        editionName: row.editionName,
+        editionName: row.editionName ?? '',
         totalQuantity: row.totalQuantity,
-        alertThreshold: row.alertThreshold,
+        alertThreshold,
         isAlert,
         thumbnailPath,
       };
@@ -329,7 +344,7 @@ export class StockService {
    */
   private getPriceStats(
     bookId: string,
-    editionId: string,
+    editionId: string | null,
   ): {
     latestPurchasePrice: number | null;
     latestSellingPrice: number | null;
@@ -347,7 +362,7 @@ export class StockService {
       .where(
         and(
           eq(inboundRecords.bookId, bookId),
-          eq(inboundRecords.editionId, editionId),
+          eqNullable(inboundRecords.editionId, editionId),
         ),
       )
       .orderBy(sql`${inboundRecords.inboundDate} DESC, ${inboundRecords.createdAt} DESC`)
@@ -361,7 +376,7 @@ export class StockService {
       .where(
         and(
           eq(outboundRecords.bookId, bookId),
-          eq(outboundRecords.editionId, editionId),
+          eqNullable(outboundRecords.editionId, editionId),
         ),
       )
       .orderBy(sql`${outboundRecords.outboundDate} DESC, ${outboundRecords.createdAt} DESC`)
@@ -379,7 +394,7 @@ export class StockService {
       .where(
         and(
           eq(inboundRecords.bookId, bookId),
-          eq(inboundRecords.editionId, editionId),
+          eqNullable(inboundRecords.editionId, editionId),
         ),
       )
       .get();
@@ -393,7 +408,7 @@ export class StockService {
       .where(
         and(
           eq(outboundRecords.bookId, bookId),
-          eq(outboundRecords.editionId, editionId),
+          eqNullable(outboundRecords.editionId, editionId),
         ),
       )
       .get();
@@ -412,18 +427,20 @@ export class StockService {
    * 获取库存单元的缩略图路径
    * 优先显示版本封面，无版本封面时显示书籍默认封面，均无时返回 null
    */
-  private getThumbnailPath(bookId: string, editionId: string): string | null {
+  private getThumbnailPath(bookId: string, editionId: string | null): string | null {
     const db = getDatabase();
 
     // 优先查找版本封面
-    const edImage = db
-      .select({ thumbnailPath: editionImages.thumbnailPath })
-      .from(editionImages)
-      .where(eq(editionImages.editionId, editionId))
-      .get();
+    if (editionId) {
+      const edImage = db
+        .select({ thumbnailPath: editionImages.thumbnailPath })
+        .from(editionImages)
+        .where(eq(editionImages.editionId, editionId))
+        .get();
 
-    if (edImage) {
-      return edImage.thumbnailPath;
+      if (edImage) {
+        return edImage.thumbnailPath;
+      }
     }
 
     // 查找书籍默认封面

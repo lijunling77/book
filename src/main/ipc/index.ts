@@ -16,6 +16,7 @@ import { registerExportIpcHandlers } from './export.ipc';
 import { registerImportIpcHandlers } from './import.ipc';
 import { registerLogIpcHandlers } from './log.ipc';
 import { registerImageIpcHandlers } from './image.ipc';
+import { registerReportIpcHandlers } from './report.ipc';
 
 /**
  * 注册所有 IPC 处理器
@@ -35,4 +36,5 @@ export function registerAllIpcHandlers(): void {
   registerImportIpcHandlers();
   registerLogIpcHandlers();
   registerImageIpcHandlers();
+  registerReportIpcHandlers();
 }

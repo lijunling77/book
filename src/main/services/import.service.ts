@@ -128,29 +128,22 @@ export class ImportService {
         if (!title) {
           throw new Error('书名不能为空');
         }
-        if (!author) {
-          throw new Error('作者不能为空');
-        }
-        if (!isbn) {
-          throw new Error('ISBN不能为空');
-        }
-        if (!category) {
-          throw new Error('分类不能为空');
-        }
 
-        // 校验 ISBN 唯一性 - 数据库中已有的
-        const existingBook = db
-          .select()
-          .from(books)
-          .where(eq(books.isbn, isbn))
-          .get();
-        if (existingBook) {
-          throw new Error(ERROR_MESSAGES.ISBN_ALREADY_EXISTS);
-        }
+        // 校验 ISBN 唯一性 - 数据库中已有的（仅当 ISBN 有值时）
+        if (isbn) {
+          const existingBook = db
+            .select()
+            .from(books)
+            .where(eq(books.isbn, isbn))
+            .get();
+          if (existingBook) {
+            throw new Error(ERROR_MESSAGES.ISBN_ALREADY_EXISTS);
+          }
 
-        // 校验 ISBN 唯一性 - 本次导入中已有的
-        if (importedIsbns.has(isbn)) {
-          throw new Error(ERROR_MESSAGES.ISBN_ALREADY_EXISTS);
+          // 校验 ISBN 唯一性 - 本次导入中已有的
+          if (importedIsbns.has(isbn)) {
+            throw new Error(ERROR_MESSAGES.ISBN_ALREADY_EXISTS);
+          }
         }
 
         // 创建书籍记录
@@ -161,9 +154,9 @@ export class ImportService {
           .values({
             id,
             title,
-            author,
-            isbn,
-            category,
+            author: author || null,
+            isbn: isbn || null,
+            category: category || null,
             description,
             createdAt: now,
             updatedAt: now,
@@ -183,7 +176,9 @@ export class ImportService {
           })
           .run();
 
-        importedIsbns.add(isbn);
+        if (isbn) {
+          importedIsbns.add(isbn);
+        }
         result.successCount++;
       } catch (error) {
         result.failureCount++;

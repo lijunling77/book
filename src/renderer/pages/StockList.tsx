@@ -40,7 +40,7 @@ const StockList: React.FC = () => {
 
   const [locations, setLocations] = useState<Location[]>([]);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
-  const [alertEditionId, setAlertEditionId] = useState<string>('');
+  const [alertEditionId, setAlertEditionId] = useState<string | null>('');
   const [alertThreshold, setAlertThreshold] = useState<number | null>(null);
   const [alertEditionLabel, setAlertEditionLabel] = useState('');
 
@@ -65,7 +65,7 @@ const StockList: React.FC = () => {
     setPage(1, pageSize);
   };
 
-  const handleSetAlert = (editionId: string, currentThreshold: number | null, label: string) => {
+  const handleSetAlert = (editionId: string | null, currentThreshold: number | null, label: string) => {
     setAlertEditionId(editionId);
     setAlertThreshold(currentThreshold);
     setAlertEditionLabel(label);
@@ -73,6 +73,10 @@ const StockList: React.FC = () => {
   };
 
   const handleSaveAlert = async () => {
+    if (!alertEditionId) {
+      message.error('版本信息缺失，无法设置预警');
+      return;
+    }
     try {
       await stockApi.setAlert(alertEditionId, alertThreshold);
       message.success('预警阈值设置成功');

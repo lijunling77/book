@@ -20,6 +20,7 @@ import {
   IMPORT_CHANNELS,
   LOG_CHANNELS,
   IMAGE_CHANNELS,
+  REPORT_CHANNELS,
 } from '../../shared/ipc-channels';
 
 import type {
@@ -346,4 +347,13 @@ export const imageApi = {
 
   thumbnail: (entityType: ImageEntityType, entityId: string): Promise<string | null> =>
     invoke(IMAGE_CHANNELS.THUMBNAIL, entityType, entityId),
+};
+
+// ============================================================
+// 综合报表 API
+// ============================================================
+
+export const reportApi = {
+  getData: (dateRange?: DateRange): Promise<unknown> =>
+    invoke(REPORT_CHANNELS.GET_DATA, dateRange),
 };

@@ -55,7 +55,7 @@ export class StocktakingService {
       // 根据盘点范围类型查询库存记录
       let stockRecords: Array<{
         bookId: string;
-        editionId: string;
+        editionId: string | null;
         locationId: string;
         quantity: number;
       }>;

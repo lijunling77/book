@@ -164,6 +164,14 @@ export const IMAGE_CHANNELS = {
 } as const;
 
 // ============================================================
+// 综合报表
+// ============================================================
+
+export const REPORT_CHANNELS = {
+  GET_DATA: 'report:getData',
+} as const;
+
+// ============================================================
 // 所有通道名称集合（用于类型检查）
 // ============================================================
 
@@ -183,4 +191,5 @@ export const ALL_CHANNELS = {
   ...IMPORT_CHANNELS,
   ...LOG_CHANNELS,
   ...IMAGE_CHANNELS,
+  ...REPORT_CHANNELS,
 } as const;

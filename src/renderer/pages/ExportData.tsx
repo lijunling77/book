@@ -49,7 +49,7 @@ const ExportData: React.FC = () => {
   useEffect(() => {
     bookApi.list({ page: 1, pageSize: 1000 }).then((r) => {
       setBooks(r.data);
-      setCategories([...new Set(r.data.map((b) => b.category))]);
+      setCategories([...new Set(r.data.map((b) => b.category).filter((c): c is string => c !== null))]);
     }).catch(() => {});
     locationApi.list().then(setLocations).catch(() => {});
   }, []);

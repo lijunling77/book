@@ -16,6 +16,7 @@ import {
   DownloadOutlined,
   UploadOutlined,
   SaveOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -30,6 +31,7 @@ const menuItems: MenuItem[] = [
   { key: '/stock', icon: <DatabaseOutlined />, label: '库存查询' },
   { key: '/price-history', icon: <DollarOutlined />, label: '价格历史' },
   { key: '/profit', icon: <LineChartOutlined />, label: '利润统计' },
+  { key: '/report', icon: <BarChartOutlined />, label: '综合报表' },
   { key: '/alerts', icon: <AlertOutlined />, label: '库存预警' },
   { key: '/stocktaking', icon: <AuditOutlined />, label: '库存盘点' },
   { key: '/logs', icon: <FileTextOutlined />, label: '操作日志' },

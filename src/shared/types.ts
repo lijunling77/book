@@ -35,9 +35,9 @@ export interface DateRange {
 export interface Book {
   id: string;
   title: string;
-  author: string;
-  isbn: string;
-  category: string;
+  author: string | null;
+  isbn: string | null;
+  category: string | null;
   description: string | null;
   createdAt: string;
   updatedAt: string;
@@ -61,9 +61,9 @@ export interface BookWithEditions extends Book {
 /** 创建书籍输入 */
 export interface CreateBookInput {
   title: string;
-  author: string;
-  isbn: string;
-  category: string;
+  author?: string | null;
+  isbn?: string | null;
+  category?: string | null;
   description?: string | null;
 }
 
@@ -136,7 +136,7 @@ export interface StockUnitAtLocation {
 export interface Stock {
   id: string;
   bookId: string;
-  editionId: string;
+  editionId: string | null;
   locationId: string;
   quantity: number;
   updatedAt: string;
@@ -156,12 +156,12 @@ export interface StockFilter {
 export interface StockView {
   stockId: string;
   bookId: string;
-  editionId: string;
+  editionId: string | null;
   locationId: string;
   bookTitle: string;
-  author: string;
-  isbn: string;
-  category: string;
+  author: string | null;
+  isbn: string | null;
+  category: string | null;
   editionName: string;
   warehouse: string;
   shelf: string;
@@ -182,11 +182,11 @@ export interface StockView {
 /** 库存汇总视图（所有位置合计） */
 export interface StockSummaryView {
   bookId: string;
-  editionId: string;
+  editionId: string | null;
   bookTitle: string;
-  author: string;
-  isbn: string;
-  category: string;
+  author: string | null;
+  isbn: string | null;
+  category: string | null;
   editionName: string;
   totalQuantity: number;
   alertThreshold: number | null;
@@ -202,7 +202,7 @@ export interface StockSummaryView {
 export interface InboundRecord {
   id: string;
   bookId: string;
-  editionId: string;
+  editionId: string | null;
   locationId: string;
   inboundDate: string;
   quantity: number;
@@ -224,7 +224,7 @@ export interface InboundRecordView extends InboundRecord {
 /** 创建入库记录输入 */
 export interface CreateInboundInput {
   bookId: string;
-  editionId: string;
+  editionId?: string | null;
   locationId: string;
   inboundDate: string;
   quantity: number;
@@ -260,7 +260,7 @@ export interface InboundFilter {
 export interface OutboundRecord {
   id: string;
   bookId: string;
-  editionId: string;
+  editionId: string | null;
   locationId: string;
   outboundDate: string;
   quantity: number;
@@ -282,7 +282,7 @@ export interface OutboundRecordView extends OutboundRecord {
 /** 创建出库记录输入 */
 export interface CreateOutboundInput {
   bookId: string;
-  editionId: string;
+  editionId?: string | null;
   locationId: string;
   outboundDate: string;
   quantity: number;
@@ -424,7 +424,7 @@ export interface StocktakingItem {
   id: string;
   taskId: string;
   bookId: string;
-  editionId: string;
+  editionId: string | null;
   locationId: string;
   systemQuantity: number;
   actualQuantity: number | null;

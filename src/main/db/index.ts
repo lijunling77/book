@@ -20,9 +20,9 @@ const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS books (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
-    author TEXT NOT NULL,
-    isbn TEXT NOT NULL UNIQUE,
-    category TEXT NOT NULL,
+    author TEXT,
+    isbn TEXT UNIQUE,
+    category TEXT,
     description TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
@@ -51,7 +51,7 @@ const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS stock (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT NOT NULL REFERENCES editions(id),
+    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     quantity INTEGER NOT NULL DEFAULT 0 CHECK(quantity >= 0),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
@@ -61,7 +61,7 @@ const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS inbound_records (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT NOT NULL REFERENCES editions(id),
+    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     inbound_date TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK(quantity > 0),
@@ -74,7 +74,7 @@ const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS outbound_records (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT NOT NULL REFERENCES editions(id),
+    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     outbound_date TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK(quantity > 0),
@@ -123,7 +123,7 @@ const CREATE_TABLES_SQL = `
     id TEXT PRIMARY KEY,
     task_id TEXT NOT NULL REFERENCES stocktaking_tasks(id) ON DELETE CASCADE,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT NOT NULL REFERENCES editions(id),
+    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     system_quantity INTEGER NOT NULL,
     actual_quantity INTEGER,

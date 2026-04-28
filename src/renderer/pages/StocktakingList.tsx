@@ -51,7 +51,7 @@ const StocktakingList: React.FC = () => {
     fetchTasks();
     locationApi.list().then(setLocations).catch(() => {});
     bookApi.list({ page: 1, pageSize: 1000 }).then((r) => {
-      const cats = [...new Set(r.data.map((b) => b.category))];
+      const cats = [...new Set(r.data.map((b) => b.category).filter((c): c is string => c !== null))];
       setCategories(cats);
     }).catch(() => {});
   }, []);

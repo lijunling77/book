@@ -78,13 +78,15 @@ export class InboundService {
       }
 
       // 校验版本存在性
-      const edition = db
-        .select()
-        .from(editions)
-        .where(eq(editions.id, input.editionId))
-        .get();
-      if (!edition) {
-        throw new Error(ERROR_MESSAGES.EDITION_NOT_FOUND);
+      if (input.editionId) {
+        const edition = db
+          .select()
+          .from(editions)
+          .where(eq(editions.id, input.editionId))
+          .get();
+        if (!edition) {
+          throw new Error(ERROR_MESSAGES.EDITION_NOT_FOUND);
+        }
       }
 
       // 校验位置存在性
@@ -103,7 +105,7 @@ export class InboundService {
       const newRecord: typeof inboundRecords.$inferInsert = {
         id,
         bookId: input.bookId,
-        editionId: input.editionId,
+        editionId: input.editionId ?? null,
         locationId: input.locationId,
         inboundDate: input.inboundDate,
         quantity: input.quantity,
@@ -118,7 +120,7 @@ export class InboundService {
       // 增加库存数量
       stockService.adjustStock(
         input.bookId,
-        input.editionId,
+        input.editionId ?? null,
         input.locationId,
         input.quantity,
       );
@@ -194,13 +196,13 @@ export class InboundService {
         // 位置和数量都变更：原位置减去原数量，新位置加上新数量
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           existing.locationId,
           -existing.quantity,
         );
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           newLocationId,
           newQuantity,
         );
@@ -208,13 +210,13 @@ export class InboundService {
         // 仅位置变更：原位置减库存，新位置加库存（数量不变）
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           existing.locationId,
           -existing.quantity,
         );
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           newLocationId,
           existing.quantity,
         );
@@ -223,7 +225,7 @@ export class InboundService {
         const delta = newQuantity - existing.quantity;
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           existing.locationId,
           delta,
         );
@@ -273,7 +275,7 @@ export class InboundService {
    * 5. 记录操作日志
    * 返回删除前的记录信息和库存变更预览
    */
-  delete(id: string): { record: InboundRecord; stockChange: { bookId: string; editionId: string; locationId: string; currentQuantity: number; changeQuantity: number } } {
+  delete(id: string): { record: InboundRecord; stockChange: { bookId: string; editionId: string | null; locationId: string; currentQuantity: number; changeQuantity: number } } {
     const sqliteDb = getSqliteDatabase();
     const db = getDatabase();
 
@@ -293,14 +295,14 @@ export class InboundService {
       // 获取当前库存数量（用于返回预览信息）
       const currentQuantity = stockService.getStockQuantity(
         existing.bookId,
-        existing.editionId,
+        existing.editionId ?? null,
         existing.locationId,
       );
 
       // 减少库存（adjustStock 内部会校验不为负）
       stockService.adjustStock(
         existing.bookId,
-        existing.editionId,
+        existing.editionId ?? null,
         existing.locationId,
         -existing.quantity,
       );
@@ -370,7 +372,7 @@ export class InboundService {
       .select({ count: count() })
       .from(inboundRecords)
       .innerJoin(books, eq(inboundRecords.bookId, books.id))
-      .innerJoin(editions, eq(inboundRecords.editionId, editions.id))
+      .leftJoin(editions, eq(inboundRecords.editionId, editions.id))
       .innerJoin(locations, eq(inboundRecords.locationId, locations.id));
 
     if (whereClause) {
@@ -401,7 +403,7 @@ export class InboundService {
       })
       .from(inboundRecords)
       .innerJoin(books, eq(inboundRecords.bookId, books.id))
-      .innerJoin(editions, eq(inboundRecords.editionId, editions.id))
+      .leftJoin(editions, eq(inboundRecords.editionId, editions.id))
       .innerJoin(locations, eq(inboundRecords.locationId, locations.id));
 
     if (whereClause) {
@@ -426,7 +428,7 @@ export class InboundService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       bookTitle: row.bookTitle,
-      editionName: row.editionName,
+      editionName: row.editionName ?? '',
       warehouse: row.warehouse,
       shelf: row.shelf,
       layer: row.layer,

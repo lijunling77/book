@@ -80,13 +80,15 @@ export class OutboundService {
       }
 
       // 校验版本存在性
-      const edition = db
-        .select()
-        .from(editions)
-        .where(eq(editions.id, input.editionId))
-        .get();
-      if (!edition) {
-        throw new Error(ERROR_MESSAGES.EDITION_NOT_FOUND);
+      if (input.editionId) {
+        const edition = db
+          .select()
+          .from(editions)
+          .where(eq(editions.id, input.editionId))
+          .get();
+        if (!edition) {
+          throw new Error(ERROR_MESSAGES.EDITION_NOT_FOUND);
+        }
       }
 
       // 校验位置存在性
@@ -102,7 +104,7 @@ export class OutboundService {
       // 校验库存充足性
       const currentQuantity = stockService.getStockQuantity(
         input.bookId,
-        input.editionId,
+        input.editionId ?? null,
         input.locationId,
       );
       if (currentQuantity < input.quantity) {
@@ -117,7 +119,7 @@ export class OutboundService {
       const newRecord: typeof outboundRecords.$inferInsert = {
         id,
         bookId: input.bookId,
-        editionId: input.editionId,
+        editionId: input.editionId ?? null,
         locationId: input.locationId,
         outboundDate: input.outboundDate,
         quantity: input.quantity,
@@ -132,7 +134,7 @@ export class OutboundService {
       // 减少库存数量
       stockService.adjustStock(
         input.bookId,
-        input.editionId,
+        input.editionId ?? null,
         input.locationId,
         -input.quantity,
       );
@@ -208,13 +210,13 @@ export class OutboundService {
         // 位置和数量都变更：原位置回退原出库数量，新位置执行新出库数量
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           existing.locationId,
           existing.quantity, // 原位置加回原数量
         );
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           newLocationId,
           -newQuantity, // 新位置减去新数量
         );
@@ -222,13 +224,13 @@ export class OutboundService {
         // 仅位置变更：原位置加回库存，新位置减去库存（数量不变）
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           existing.locationId,
           existing.quantity, // 原位置加回
         );
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           newLocationId,
           -existing.quantity, // 新位置减去
         );
@@ -238,7 +240,7 @@ export class OutboundService {
         const delta = existing.quantity - newQuantity;
         stockService.adjustStock(
           existing.bookId,
-          existing.editionId,
+          existing.editionId ?? null,
           existing.locationId,
           delta,
         );
@@ -287,7 +289,7 @@ export class OutboundService {
    * 4. 记录操作日志
    * 返回删除前的记录信息和库存变更预览
    */
-  delete(id: string): { record: OutboundRecord; stockChange: { bookId: string; editionId: string; locationId: string; currentQuantity: number; changeQuantity: number } } {
+  delete(id: string): { record: OutboundRecord; stockChange: { bookId: string; editionId: string | null; locationId: string; currentQuantity: number; changeQuantity: number } } {
     const sqliteDb = getSqliteDatabase();
     const db = getDatabase();
 
@@ -307,14 +309,14 @@ export class OutboundService {
       // 获取当前库存数量（用于返回预览信息）
       const currentQuantity = stockService.getStockQuantity(
         existing.bookId,
-        existing.editionId,
+        existing.editionId ?? null,
         existing.locationId,
       );
 
       // 增加库存数量（回退出库操作）
       stockService.adjustStock(
         existing.bookId,
-        existing.editionId,
+        existing.editionId ?? null,
         existing.locationId,
         existing.quantity, // 正数，增加库存
       );
@@ -384,7 +386,7 @@ export class OutboundService {
       .select({ count: count() })
       .from(outboundRecords)
       .innerJoin(books, eq(outboundRecords.bookId, books.id))
-      .innerJoin(editions, eq(outboundRecords.editionId, editions.id))
+      .leftJoin(editions, eq(outboundRecords.editionId, editions.id))
       .innerJoin(locations, eq(outboundRecords.locationId, locations.id));
 
     if (whereClause) {
@@ -415,7 +417,7 @@ export class OutboundService {
       })
       .from(outboundRecords)
       .innerJoin(books, eq(outboundRecords.bookId, books.id))
-      .innerJoin(editions, eq(outboundRecords.editionId, editions.id))
+      .leftJoin(editions, eq(outboundRecords.editionId, editions.id))
       .innerJoin(locations, eq(outboundRecords.locationId, locations.id));
 
     if (whereClause) {
@@ -440,7 +442,7 @@ export class OutboundService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       bookTitle: row.bookTitle,
-      editionName: row.editionName,
+      editionName: row.editionName ?? '',
       warehouse: row.warehouse,
       shelf: row.shelf,
       layer: row.layer,

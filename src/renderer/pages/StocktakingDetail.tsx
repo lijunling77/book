@@ -15,7 +15,7 @@ import {
   Row,
   Col,
   Empty,
-  Popconfirm,
+  Modal,
   Descriptions,
 } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
@@ -38,6 +38,7 @@ const StocktakingDetail: React.FC = () => {
   const [actualValues, setActualValues] = useState<Record<string, number | null>>({});
   const [saving, setSaving] = useState(false);
   const [report, setReport] = useState<StocktakingReport | null>(null);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   const fetchDetail = async () => {
     if (!id) return;
@@ -88,13 +89,28 @@ const StocktakingDetail: React.FC = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitAndConfirm = async () => {
     if (!id) return;
     setSaving(true);
     try {
+      // Step 1: Save any unsaved actual values
+      const items = Object.entries(actualValues)
+        .filter(([, val]) => val !== null && val !== undefined)
+        .map(([itemId, actualQuantity]) => ({
+          itemId,
+          actualQuantity: actualQuantity!,
+        }));
+
+      if (items.length > 0) {
+        await stocktakingApi.recordActual(id, items);
+      }
+
+      // Step 2: Submit to generate report
       const result = await stocktakingApi.submit(id);
       setReport(result);
-      message.success('盘点报告已生成');
+
+      // Step 3: Show confirmation modal with report
+      setConfirmModalOpen(true);
     } catch (err) {
       message.error(err instanceof Error ? err.message : '提交失败');
     } finally {
@@ -108,8 +124,9 @@ const StocktakingDetail: React.FC = () => {
     try {
       await stocktakingApi.confirm(id);
       message.success('盘点已确认，库存已调整');
-      fetchDetail();
+      setConfirmModalOpen(false);
       setReport(null);
+      fetchDetail();
     } catch (err) {
       message.error(err instanceof Error ? err.message : '确认失败');
     } finally {
@@ -213,25 +230,6 @@ const StocktakingDetail: React.FC = () => {
         )}
       </Descriptions>
 
-      {report && (
-        <Card title="盘点报告" style={{ marginBottom: 16 }}>
-          <Row gutter={[16, 16]}>
-            <Col span={6}><Statistic title="总项数" value={report.totalItems} /></Col>
-            <Col span={6}><Statistic title="盘盈" value={report.surplusCount} valueStyle={{ color: '#3f8600' }} /></Col>
-            <Col span={6}><Statistic title="盘亏" value={report.deficitCount} valueStyle={{ color: '#cf1322' }} /></Col>
-            <Col span={6}><Statistic title="一致" value={report.matchCount} /></Col>
-          </Row>
-          {report.unrecordedCount > 0 && (
-            <Alert
-              message={`有 ${report.unrecordedCount} 个库存单元尚未录入实际数量`}
-              type="warning"
-              showIcon
-              style={{ marginTop: 16 }}
-            />
-          )}
-        </Card>
-      )}
-
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 
       {detail.items.length === 0 ? (
@@ -247,27 +245,57 @@ const StocktakingDetail: React.FC = () => {
 
           {!isCompleted && (
             <Space style={{ marginTop: 16 }}>
-              <Button type="primary" onClick={handleSaveActual} loading={saving}>
+              <Button onClick={handleSaveActual} loading={saving}>
                 保存实际数量
               </Button>
-              <Button onClick={handleSubmit} loading={saving}>
-                提交盘点结果
+              <Button type="primary" onClick={handleSubmitAndConfirm} loading={saving}>
+                提交并调整库存
               </Button>
-              <Popconfirm
-                title="确认盘点"
-                description="确认后将根据实际数量调整库存，此操作不可撤销。确定要确认吗？"
-                onConfirm={handleConfirm}
-                okText="确认"
-                cancelText="取消"
-              >
-                <Button danger loading={saving}>
-                  确认并调整库存
-                </Button>
-              </Popconfirm>
             </Space>
           )}
         </>
       )}
+
+      {/* Confirmation modal with report */}
+      <Modal
+        title="盘点报告确认"
+        open={confirmModalOpen}
+        onCancel={() => setConfirmModalOpen(false)}
+        width={600}
+        footer={
+          <Space>
+            <Button onClick={() => setConfirmModalOpen(false)}>取消</Button>
+            <Button type="primary" danger onClick={handleConfirm} loading={saving}>
+              确认调整
+            </Button>
+          </Space>
+        }
+      >
+        {report && (
+          <>
+            <Alert
+              message="确认后将根据实际数量调整库存，此操作不可撤销。"
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+            <Row gutter={[16, 16]}>
+              <Col span={6}><Statistic title="总项数" value={report.totalItems} /></Col>
+              <Col span={6}><Statistic title="盘盈" value={report.surplusCount} valueStyle={{ color: '#3f8600' }} /></Col>
+              <Col span={6}><Statistic title="盘亏" value={report.deficitCount} valueStyle={{ color: '#cf1322' }} /></Col>
+              <Col span={6}><Statistic title="一致" value={report.matchCount} /></Col>
+            </Row>
+            {report.unrecordedCount > 0 && (
+              <Alert
+                message={`有 ${report.unrecordedCount} 个库存单元尚未录入实际数量`}
+                type="warning"
+                showIcon
+                style={{ marginTop: 16 }}
+              />
+            )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 };

@@ -50,10 +50,12 @@ export class BookService {
   create(input: CreateBookInput): Book {
     const db = getDatabase();
 
-    // 校验 ISBN 唯一性
-    const existing = db.select().from(books).where(eq(books.isbn, input.isbn)).get();
-    if (existing) {
-      throw new Error(ERROR_MESSAGES.ISBN_ALREADY_EXISTS);
+    // 校验 ISBN 唯一性（仅当 ISBN 有值时）
+    if (input.isbn) {
+      const existing = db.select().from(books).where(eq(books.isbn, input.isbn)).get();
+      if (existing) {
+        throw new Error(ERROR_MESSAGES.ISBN_ALREADY_EXISTS);
+      }
     }
 
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -62,9 +64,9 @@ export class BookService {
     const newBook: typeof books.$inferInsert = {
       id,
       title: input.title,
-      author: input.author,
-      isbn: input.isbn,
-      category: input.category,
+      author: input.author ?? null,
+      isbn: input.isbn ?? null,
+      category: input.category ?? null,
       description: input.description ?? null,
       createdAt: now,
       updatedAt: now,

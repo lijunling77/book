@@ -98,7 +98,7 @@ export class ExportService {
       })
       .from(inboundRecords)
       .innerJoin(books, eq(inboundRecords.bookId, books.id))
-      .innerJoin(editions, eq(inboundRecords.editionId, editions.id))
+      .leftJoin(editions, eq(inboundRecords.editionId, editions.id))
       .innerJoin(locations, eq(inboundRecords.locationId, locations.id));
 
     if (whereClause) {
@@ -168,7 +168,7 @@ export class ExportService {
       })
       .from(outboundRecords)
       .innerJoin(books, eq(outboundRecords.bookId, books.id))
-      .innerJoin(editions, eq(outboundRecords.editionId, editions.id))
+      .leftJoin(editions, eq(outboundRecords.editionId, editions.id))
       .innerJoin(locations, eq(outboundRecords.locationId, locations.id));
 
     if (whereClause) {
@@ -229,7 +229,7 @@ export class ExportService {
       })
       .from(stock)
       .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(editions, eq(stock.editionId, editions.id))
+      .leftJoin(editions, eq(stock.editionId, editions.id))
       .innerJoin(locations, eq(stock.locationId, locations.id));
 
     if (whereClause) {
@@ -268,7 +268,7 @@ export class ExportService {
         .from(books)
         .groupBy(books.category)
         .all();
-      categories = categoryRows.map((r) => r.category);
+      categories = categoryRows.map((r) => r.category).filter((c): c is string => c !== null);
     }
 
     if (categories.length === 0) {

@@ -107,13 +107,13 @@ const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSu
   const handleSubmit = async () => {
     const inputs: CreateInboundInput[] = [];
     for (const row of rows) {
-      if (!row.bookId || !row.editionId || !row.locationId || !row.inboundDate || !row.quantity || row.purchasePrice == null) {
-        message.warning('请填写所有必填字段');
+      if (!row.bookId || !row.locationId || !row.inboundDate || !row.quantity || row.purchasePrice == null) {
+        message.warning('请填写所有必填字段（版本为可选）');
         return;
       }
       inputs.push({
         bookId: row.bookId,
-        editionId: row.editionId,
+        editionId: row.editionId || null,
         locationId: row.locationId,
         inboundDate: row.inboundDate.format('YYYY-MM-DD'),
         quantity: row.quantity,
