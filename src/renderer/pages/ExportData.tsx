@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Select, DatePicker, Space, Button, Alert, message, Card } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Book, Location, ExportFormat } from '../../shared/types';
 import { exportApi, bookApi, locationApi } from '../utils/ipc';
@@ -53,7 +53,10 @@ const ExportData: React.FC = () => {
               {(exportType === 'inbound' || exportType === 'outbound' || exportType === 'profit') && <RangePicker value={filterDateRange} onChange={(dates) => setFilterDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} />}
             </Space>
           </div>
-          <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport} loading={exporting}>导出</Button>
+          <Space>
+            <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport} loading={exporting}>导出</Button>
+            <Button icon={<ReloadOutlined />} onClick={() => { setFilterBookId(undefined); setFilterLocationId(undefined); setFilterDateRange(null); }}>重置</Button>
+          </Space>
         </Space>
       </Card>
     </div>

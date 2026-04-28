@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import type { StockView, StockSummaryView, Location } from '../../shared/types';
 import { locationApi } from '../utils/ipc';
 import { useStockStore } from '../stores/stockStore';
-import { NO_DATA_TEXT, CURRENCY_UNIT } from '../../shared/constants';
+import { CURRENCY_UNIT } from '../../shared/constants';
 import { formatPriceValue } from '../utils/format';
 
 const StockList: React.FC = () => {
@@ -45,7 +45,7 @@ const StockList: React.FC = () => {
     ? stocks.filter((s) => s.status === localStatus)
     : stocks;
 
-  const priceRender = (val: number | null) => val !== null && val !== undefined ? `${formatPriceValue(val)} ${CURRENCY_UNIT}` : NO_DATA_TEXT;
+  const priceRender = (val: number | null) => val !== null && val !== undefined ? `${formatPriceValue(val)} ${CURRENCY_UNIT}` : '-';
 
   const detailColumns: ColumnsType<StockView> = [
     { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', sorter: (a, b) => a.bookTitle.localeCompare(b.bookTitle) },
@@ -54,7 +54,7 @@ const StockList: React.FC = () => {
     { title: '状态', dataIndex: 'status', key: 'status', render: (val: string) => val === '缺货' ? <Tag color="red">缺货</Tag> : <Tag color="green">正常</Tag> },
     { title: '最近买入价', dataIndex: 'latestPurchasePrice', key: 'latestPurchasePrice', sorter: (a, b) => (a.latestPurchasePrice ?? 0) - (b.latestPurchasePrice ?? 0), render: priceRender },
     { title: '最近售出价', dataIndex: 'latestSellingPrice', key: 'latestSellingPrice', sorter: (a, b) => (a.latestSellingPrice ?? 0) - (b.latestSellingPrice ?? 0), render: priceRender },
-    { title: '买入价范围', key: 'priceRange', render: (_: unknown, r: StockView) => r.purchasePriceMin !== null ? `${formatPriceValue(r.purchasePriceMin)} ~ ${formatPriceValue(r.purchasePriceMax)}` : NO_DATA_TEXT },
+    { title: '买入价范围', key: 'priceRange', render: (_: unknown, r: StockView) => r.purchasePriceMin !== null ? `${formatPriceValue(r.purchasePriceMin)} ~ ${formatPriceValue(r.purchasePriceMax)}` : '-' },
     { title: '平均买入价', dataIndex: 'averagePurchasePrice', key: 'averagePurchasePrice', sorter: (a, b) => (a.averagePurchasePrice ?? 0) - (b.averagePurchasePrice ?? 0), render: priceRender },
     { title: '平均售出价', dataIndex: 'averageSellingPrice', key: 'averageSellingPrice', sorter: (a, b) => (a.averageSellingPrice ?? 0) - (b.averageSellingPrice ?? 0), render: priceRender },
   ];

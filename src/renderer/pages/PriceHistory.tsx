@@ -3,7 +3,7 @@ import { Typography, Table, Alert, Spin, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Book, PurchasePriceHistory, SellingPriceHistory, PriceStats } from '../../shared/types';
 import { bookApi, priceApi } from '../utils/ipc';
-import { CURRENCY_UNIT, NO_DATA_TEXT } from '../../shared/constants';
+import { CURRENCY_UNIT } from '../../shared/constants';
 import { formatPriceValue, formatDate } from '../utils/format';
 
 interface BookPriceRow {
@@ -19,7 +19,7 @@ interface BookPriceRow {
 }
 
 const priceRender = (val: number | null) =>
-  val !== null && val !== undefined ? `¥${formatPriceValue(val)}` : NO_DATA_TEXT;
+  val !== null && val !== undefined ? `¥${formatPriceValue(val)}` : '-';
 
 const PriceHistory: React.FC = () => {
   const [rows, setRows] = useState<BookPriceRow[]>([]);
@@ -77,7 +77,7 @@ const PriceHistory: React.FC = () => {
       title: '买入价范围',
       key: 'priceRange',
       render: (_: unknown, r: BookPriceRow) =>
-        r.purchasePriceMin !== null ? `¥${formatPriceValue(r.purchasePriceMin)} ~ ¥${formatPriceValue(r.purchasePriceMax)}` : NO_DATA_TEXT,
+        r.purchasePriceMin !== null ? `¥${formatPriceValue(r.purchasePriceMin)} ~ ¥${formatPriceValue(r.purchasePriceMax)}` : '-',
     },
   ];
 
@@ -123,16 +123,16 @@ const ExpandedDetail: React.FC<{ bookId: string }> = ({ bookId }) => {
   if (loading) return <Spin size="small" />;
 
   const purchaseColumns: ColumnsType<PurchasePriceHistory> = [
-    { title: '入库日期', dataIndex: 'inboundDate', key: 'inboundDate', render: formatDate },
-    { title: `买入价格（${CURRENCY_UNIT}）`, dataIndex: 'purchasePrice', key: 'purchasePrice', render: (v: number) => formatPriceValue(v) },
-    { title: '数量', dataIndex: 'quantity', key: 'quantity' },
+    { title: '入库日期', dataIndex: 'inboundDate', key: 'inboundDate', render: formatDate, sorter: (a, b) => a.inboundDate.localeCompare(b.inboundDate) },
+    { title: `买入价格（${CURRENCY_UNIT}）`, dataIndex: 'purchasePrice', key: 'purchasePrice', render: (v: number) => formatPriceValue(v), sorter: (a, b) => a.purchasePrice - b.purchasePrice },
+    { title: '数量', dataIndex: 'quantity', key: 'quantity', sorter: (a, b) => a.quantity - b.quantity },
     { title: '供应商', dataIndex: 'supplier', key: 'supplier', render: (v: string | null) => v ?? '-' },
   ];
 
   const sellingColumns: ColumnsType<SellingPriceHistory> = [
-    { title: '出库日期', dataIndex: 'outboundDate', key: 'outboundDate', render: formatDate },
-    { title: `售出价格（${CURRENCY_UNIT}）`, dataIndex: 'sellingPrice', key: 'sellingPrice', render: (v: number) => formatPriceValue(v) },
-    { title: '数量', dataIndex: 'quantity', key: 'quantity' },
+    { title: '出库日期', dataIndex: 'outboundDate', key: 'outboundDate', render: formatDate, sorter: (a, b) => a.outboundDate.localeCompare(b.outboundDate) },
+    { title: `售出价格（${CURRENCY_UNIT}）`, dataIndex: 'sellingPrice', key: 'sellingPrice', render: (v: number) => formatPriceValue(v), sorter: (a, b) => a.sellingPrice - b.sellingPrice },
+    { title: '数量', dataIndex: 'quantity', key: 'quantity', sorter: (a, b) => a.quantity - b.quantity },
     { title: '买家', dataIndex: 'buyer', key: 'buyer', render: (v: string | null) => v ?? '-' },
   ];
 

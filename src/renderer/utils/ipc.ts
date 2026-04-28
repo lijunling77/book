@@ -138,8 +138,8 @@ export const stocktakingApi = {
 };
 
 export const backupApi = {
-  create: (targetPath: string): Promise<BackupInfo> => invoke(BACKUP_CHANNELS.CREATE, targetPath),
-  restore: (filePath: string): Promise<void> => invoke(BACKUP_CHANNELS.RESTORE, filePath),
+  create: (): Promise<BackupInfo> => invoke(BACKUP_CHANNELS.CREATE),
+  restore: (): Promise<void> => invoke(BACKUP_CHANNELS.RESTORE),
   latest: (): Promise<BackupInfo | null> => invoke(BACKUP_CHANNELS.LATEST),
 };
 

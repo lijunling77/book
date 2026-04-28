@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Input, Space, Typography, Popconfirm, message, Alert } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { Book } from '../../shared/types';
 import { bookApi } from '../utils/ipc';
@@ -13,14 +13,11 @@ const BookList: React.FC = () => {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [localKeyword, setLocalKeyword] = useState(searchKeyword);
 
   useEffect(() => {
     fetchBooks();
   }, [fetchBooks]);
-
-  const handleSearch = (value: string) => {
-    searchBooks(value);
-  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -73,15 +70,16 @@ const BookList: React.FC = () => {
 
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
 
-      <Space style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <Input.Search
+      <Space style={{ marginBottom: 16 }} wrap>
+        <Input
           placeholder="搜索书名、作者"
           allowClear
-          enterButton={<SearchOutlined />}
-          defaultValue={searchKeyword}
-          onSearch={handleSearch}
+          value={localKeyword}
+          onChange={(e) => setLocalKeyword(e.target.value)}
           style={{ width: 360 }}
         />
+        <Button type="primary" icon={<SearchOutlined />} onClick={() => searchBooks(localKeyword)}>查询</Button>
+        <Button icon={<ReloadOutlined />} onClick={() => { setLocalKeyword(''); fetchBooks(); }}>重置</Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           新增书籍
         </Button>

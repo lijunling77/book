@@ -37,9 +37,9 @@ const StocktakingList: React.FC = () => {
 
   const columns: ColumnsType<StocktakingTask> = [
     { title: '盘点范围', key: 'scopeValue', render: (_: unknown, record: StocktakingTask) => { const loc = locations.find((l) => l.id === record.scopeValue); return loc ? `${loc.warehouse}-${loc.shelf}-${loc.layer}` : record.scopeValue; } },
-    { title: '状态', dataIndex: 'status', key: 'status', render: (val: string) => <Tag color={val === 'completed' ? 'green' : 'blue'}>{STOCKTAKING_STATUS_LABELS[val] ?? val}</Tag> },
-    { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', render: formatDateTime },
-    { title: '完成时间', dataIndex: 'completedAt', key: 'completedAt', render: (val: string | null) => val ? formatDateTime(val) : '-' },
+    { title: '状态', dataIndex: 'status', key: 'status', render: (val: string) => <Tag color={val === 'completed' ? 'green' : 'blue'}>{STOCKTAKING_STATUS_LABELS[val] ?? val}</Tag>, sorter: (a, b) => a.status.localeCompare(b.status) },
+    { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', render: formatDateTime, sorter: (a, b) => a.createdAt.localeCompare(b.createdAt) },
+    { title: '完成时间', dataIndex: 'completedAt', key: 'completedAt', render: (val: string | null) => val ? formatDateTime(val) : '-', sorter: (a, b) => (a.completedAt || '').localeCompare(b.completedAt || '') },
     { title: '操作', key: 'action', width: 100, render: (_: unknown, record: StocktakingTask) => <a onClick={() => navigate(`/stocktaking/${record.id}`)}>查看详情</a> },
   ];
 

@@ -7,8 +7,6 @@ import {
   message,
   Card,
   Descriptions,
-  Input,
-  Upload,
   Popconfirm,
   Empty,
 } from 'antd';
@@ -21,7 +19,6 @@ const BackupRestore: React.FC = () => {
   const [latestBackup, setLatestBackup] = useState<BackupInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [backupPath, setBackupPath] = useState('');
   const [backing, setBacking] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
@@ -42,14 +39,10 @@ const BackupRestore: React.FC = () => {
   }, []);
 
   const handleBackup = async () => {
-    if (!backupPath.trim()) {
-      message.warning('请输入备份路径');
-      return;
-    }
     setBacking(true);
     setError(null);
     try {
-      const info = await backupApi.create(backupPath.trim());
+      const info = await backupApi.create();
       message.success(`备份成功：${info.filePath}`);
       setLatestBackup(info);
     } catch (err) {
@@ -61,16 +54,11 @@ const BackupRestore: React.FC = () => {
     }
   };
 
-  const handleRestore = async (file: File) => {
-    const filePath = (file as unknown as { path: string }).path;
-    if (!filePath) {
-      message.error('无法获取文件路径');
-      return false;
-    }
+  const handleRestore = async () => {
     setRestoring(true);
     setError(null);
     try {
-      await backupApi.restore(filePath);
+      await backupApi.restore();
       message.success('数据恢复成功，请刷新页面查看最新数据');
       fetchLatest();
     } catch (err) {
@@ -80,7 +68,6 @@ const BackupRestore: React.FC = () => {
     } finally {
       setRestoring(false);
     }
-    return false;
   };
 
   return (
@@ -101,25 +88,14 @@ const BackupRestore: React.FC = () => {
       </Card>
 
       <Card title="创建备份" style={{ marginBottom: 16 }}>
-        <Space>
-          <Input
-            placeholder="输入备份文件保存路径"
-            style={{ width: 400 }}
-            value={backupPath}
-            onChange={(e) => setBackupPath(e.target.value)}
-          />
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={handleBackup}
-            loading={backing}
-          >
-            创建备份
-          </Button>
-        </Space>
-        <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
-          请输入完整的文件路径，例如：/Users/username/backup/books.db
-        </div>
+        <Button
+          type="primary"
+          icon={<SaveOutlined />}
+          onClick={handleBackup}
+          loading={backing}
+        >
+          创建备份
+        </Button>
       </Card>
 
       <Card title="恢复数据">
@@ -130,20 +106,14 @@ const BackupRestore: React.FC = () => {
           showIcon
           style={{ marginBottom: 16 }}
         />
-        <Upload
-          accept=".db,.sqlite,.sqlite3"
-          showUploadList={false}
-          beforeUpload={handleRestore}
-          disabled={restoring}
+        <Button
+          icon={<CloudDownloadOutlined />}
+          loading={restoring}
+          danger
+          onClick={handleRestore}
         >
-          <Button
-            icon={<CloudDownloadOutlined />}
-            loading={restoring}
-            danger
-          >
-            {restoring ? '恢复中...' : '选择备份文件并恢复'}
-          </Button>
-        </Upload>
+          {restoring ? '恢复中...' : '恢复'}
+        </Button>
       </Card>
     </div>
   );
