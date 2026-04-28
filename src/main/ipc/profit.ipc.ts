@@ -13,4 +13,12 @@ export function registerProfitIpcHandlers(): void {
       return { error: true, message: error instanceof Error ? error.message : '未知错误' };
     }
   });
+
+  ipcMain.handle(PROFIT_CHANNELS.MONTHLY, () => {
+    try {
+      return profitService.calculateMonthly();
+    } catch (error) {
+      return { error: true, message: error instanceof Error ? error.message : '未知错误' };
+    }
+  });
 }

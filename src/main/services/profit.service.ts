@@ -8,6 +8,14 @@ import { getDatabase } from '../db';
 import { inboundRecords, outboundRecords } from '../db/schema';
 import type { ProfitDetail, DateRange } from '../../shared/types';
 
+/** 月度利润 */
+export interface MonthlyProfit {
+  month: string;
+  totalPurchaseCost: number;
+  totalSalesRevenue: number;
+  netProfit: number;
+}
+
 export class ProfitService {
   calculateByBook(bookId: string, dateRange?: DateRange): ProfitDetail {
     const db = getDatabase();
@@ -53,5 +61,59 @@ export class ProfitService {
       totalSalesRevenue,
       netProfit: totalSalesRevenue - totalPurchaseCost,
     };
+  }
+
+  /**
+   * 按月统计利润（全部书籍）
+   * 返回每个月的采购成本、销售收入、净利润
+   */
+  calculateMonthly(): MonthlyProfit[] {
+    const db = getDatabase();
+
+    // 按月汇总入库成本
+    const monthlyCosts = db
+      .select({
+        month: sql<string>`SUBSTR(${inboundRecords.inboundDate}, 1, 7)`,
+        totalCost: sql<number>`COALESCE(SUM(${inboundRecords.purchasePrice} * ${inboundRecords.quantity}), 0)`,
+      })
+      .from(inboundRecords)
+      .groupBy(sql`SUBSTR(${inboundRecords.inboundDate}, 1, 7)`)
+      .all();
+
+    // 按月汇总出库收入
+    const monthlyRevenues = db
+      .select({
+        month: sql<string>`SUBSTR(${outboundRecords.outboundDate}, 1, 7)`,
+        totalRevenue: sql<number>`COALESCE(SUM(${outboundRecords.sellingPrice} * ${outboundRecords.quantity}), 0)`,
+      })
+      .from(outboundRecords)
+      .groupBy(sql`SUBSTR(${outboundRecords.outboundDate}, 1, 7)`)
+      .all();
+
+    // 合并所有月份
+    const monthMap = new Map<string, { cost: number; revenue: number }>();
+
+    for (const row of monthlyCosts) {
+      monthMap.set(row.month, { cost: row.totalCost, revenue: 0 });
+    }
+    for (const row of monthlyRevenues) {
+      const existing = monthMap.get(row.month);
+      if (existing) {
+        existing.revenue = row.totalRevenue;
+      } else {
+        monthMap.set(row.month, { cost: 0, revenue: row.totalRevenue });
+      }
+    }
+
+    // 按月份排序（倒序，最新的在前）
+    const months = Array.from(monthMap.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]));
+
+    return months.map(([month, data]) => ({
+      month,
+      totalPurchaseCost: data.cost,
+      totalSalesRevenue: data.revenue,
+      netProfit: data.revenue - data.cost,
+    }));
   }
 }
