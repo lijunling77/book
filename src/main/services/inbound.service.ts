@@ -120,18 +120,26 @@ export class InboundService {
       }
 
       if (locationChanged || quantityChanged) {
-        // 回退原库存
-        stockService.adjustStock(
-          existing.bookId,
-          existing.locationId,
-          -existing.quantity,
-        );
-        // 按新值重建库存
-        stockService.adjustStock(
-          existing.bookId,
-          newLocationId,
-          newQuantity,
-        );
+        const oldQty = stockService.getStockQuantity(existing.bookId, existing.locationId);
+
+        if (locationChanged) {
+          // 位置变了：原位置减原数量，新位置加新数量
+          const oldAfter = oldQty - existing.quantity;
+          if (oldAfter < 0) {
+            throw new Error(`原位置库存不足（当前${oldQty}，需回退${existing.quantity}），请先调整出库记录`);
+          }
+          // 原位置减
+          stockService.adjustStock(existing.bookId, existing.locationId, -existing.quantity);
+          // 新位置加
+          stockService.adjustStock(existing.bookId, newLocationId, newQuantity);
+        } else {
+          // 只改数量：检查调整后不为负
+          const delta = newQuantity - existing.quantity;
+          if (oldQty + delta < 0) {
+            throw new Error(`操作将导致库存数量为负（当前${oldQty}，调整${delta}）`);
+          }
+          stockService.adjustStock(existing.bookId, existing.locationId, delta);
+        }
       }
 
       const updateData: Record<string, unknown> = { updatedAt: now };
