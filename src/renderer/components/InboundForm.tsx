@@ -19,7 +19,8 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [quickBookOpen, setQuickBookOpen] = useState(false);
   const [quickBookTitle, setQuickBookTitle] = useState('');
-  const [quickBookLocation, setQuickBookLocation] = useState('');
+  const [quickBookAuthor, setQuickBookAuthor] = useState('');
+  const [quickBookDesc, setQuickBookDesc] = useState('');
   const [quickBookLoading, setQuickBookLoading] = useState(false);
   const [locationOptions, setLocationOptions] = useState<{ value: string; label: string }[]>([]);
 
@@ -58,13 +59,14 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
     if (!title) { message.warning('请输入书名'); return; }
     setQuickBookLoading(true);
     try {
-      const created = await bookApi.create({ title, location: quickBookLocation || null });
+      const created = await bookApi.create({ title, author: quickBookAuthor || null, description: quickBookDesc || null });
       message.success('书籍创建成功');
       await loadBooks();
       form.setFieldValue('bookId', created.id);
       setQuickBookOpen(false);
       setQuickBookTitle('');
-      setQuickBookLocation('');
+      setQuickBookAuthor('');
+      setQuickBookDesc('');
     } catch (err) { message.error(err instanceof Error ? err.message : '创建书籍失败'); }
     finally { setQuickBookLoading(false); }
   };
@@ -130,20 +132,16 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
           <Form.Item name="supplier" label="供应商"><Input placeholder="请输入供应商（可选）" /></Form.Item>
         </Form>
       </Modal>
-      <Modal title="快速新增书籍" open={quickBookOpen} onOk={handleQuickCreateBook} onCancel={() => { setQuickBookOpen(false); setQuickBookTitle(''); setQuickBookLocation(''); }} confirmLoading={quickBookLoading} width={480} destroyOnClose>
+      <Modal title="快速新增书籍" open={quickBookOpen} onOk={handleQuickCreateBook} onCancel={() => { setQuickBookOpen(false); setQuickBookTitle(''); setQuickBookAuthor(''); setQuickBookDesc(''); }} confirmLoading={quickBookLoading} width={480} destroyOnClose>
         <Form layout="vertical">
           <Form.Item label="书名" required>
             <Input placeholder="请输入书名" value={quickBookTitle} onChange={(e) => setQuickBookTitle(e.target.value)} />
           </Form.Item>
-          <Form.Item label="存放位置">
-            <AutoComplete
-              placeholder="选择或输入位置（可选）"
-              options={locationOptions}
-              value={quickBookLocation}
-              onChange={setQuickBookLocation}
-              filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-              allowClear
-            />
+          <Form.Item label="作者">
+            <Input placeholder="请输入作者（可选）" value={quickBookAuthor} onChange={(e) => setQuickBookAuthor(e.target.value)} />
+          </Form.Item>
+          <Form.Item label="描述">
+            <Input.TextArea rows={2} placeholder="请输入描述（可选）" value={quickBookDesc} onChange={(e) => setQuickBookDesc(e.target.value)} />
           </Form.Item>
         </Form>
       </Modal>
