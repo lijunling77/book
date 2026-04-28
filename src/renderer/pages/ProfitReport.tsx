@@ -7,6 +7,8 @@ import { CURRENCY_UNIT } from '../../shared/constants';
 
 interface MonthlyProfit {
   month: string;
+  inboundQuantity: number;
+  outboundQuantity: number;
   totalPurchaseCost: number;
   totalSalesRevenue: number;
   netProfit: number;
@@ -40,6 +42,18 @@ const ProfitReport: React.FC = () => {
       key: 'month',
       width: 120,
       render: (val: string) => val || '-',
+    },
+    {
+      title: '入库数量',
+      dataIndex: 'inboundQuantity',
+      key: 'inboundQuantity',
+      sorter: (a, b) => a.inboundQuantity - b.inboundQuantity,
+    },
+    {
+      title: '出库数量',
+      dataIndex: 'outboundQuantity',
+      key: 'outboundQuantity',
+      sorter: (a, b) => a.outboundQuantity - b.outboundQuantity,
     },
     {
       title: '采购成本',

@@ -121,7 +121,7 @@ export const priceApi = {
 
 export const profitApi = {
   byBook: (bookId: string, dateRange?: DateRange): Promise<ProfitDetail> => invoke(PROFIT_CHANNELS.BY_BOOK, bookId, dateRange),
-  monthly: (): Promise<Array<{ month: string; totalPurchaseCost: number; totalSalesRevenue: number; netProfit: number }>> => invoke(PROFIT_CHANNELS.MONTHLY),
+  monthly: (): Promise<Array<{ month: string; inboundQuantity: number; outboundQuantity: number; totalPurchaseCost: number; totalSalesRevenue: number; netProfit: number }>> => invoke(PROFIT_CHANNELS.MONTHLY),
 };
 
 export const dashboardApi = {
