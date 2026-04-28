@@ -40,9 +40,9 @@ const BookList: React.FC = () => {
   };
 
   const columns: ColumnsType<Book> = [
-    { title: '书名', dataIndex: 'title', key: 'title', sorter: (a, b) => a.title.localeCompare(b.title) },
-    { title: '作者', dataIndex: 'author', key: 'author', render: (v: string | null) => v ?? '-', sorter: (a, b) => (a.author || '').localeCompare(b.author || '') },
-    { title: '描述', dataIndex: 'description', key: 'description', render: (v: string | null) => v ?? '-', ellipsis: true },
+    { title: '书名', dataIndex: 'title', key: 'title', width: 200, sorter: (a, b) => a.title.localeCompare(b.title) },
+    { title: '作者', dataIndex: 'author', key: 'author', width: 120, render: (v: string | null) => v ?? '-', sorter: (a, b) => (a.author || '').localeCompare(b.author || '') },
+    { title: '描述', dataIndex: 'description', key: 'description', render: (v: string | null) => v ?? '-' },
     {
       title: '操作',
       key: 'action',

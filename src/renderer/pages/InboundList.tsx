@@ -49,12 +49,12 @@ const InboundList: React.FC = () => {
   const handleDelete = async (id: string) => { try { await inboundApi.delete(id); message.success('入库记录删除成功'); fetchRecords(); } catch (err) { message.error(err instanceof Error ? err.message : '删除失败'); } };
 
   const columns: ColumnsType<InboundRecord & { bookTitle?: string }> = [
-    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', render: (val: string | undefined, record) => val || record.bookId, sorter: (a, b) => ((a as any).bookTitle || '').localeCompare((b as any).bookTitle || '') },
+    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', width: 200, render: (val: string | undefined, record) => val || record.bookId, sorter: (a, b) => ((a as any).bookTitle || '').localeCompare((b as any).bookTitle || '') },
+    { title: '位置', dataIndex: 'location', key: 'location', render: (v: string | null) => v ?? '-' },
     { title: '入库日期', dataIndex: 'inboundDate', key: 'inboundDate', render: (val: string) => val ?? '-', sorter: (a, b) => (a.inboundDate || '').localeCompare(b.inboundDate || '') },
     { title: '数量', dataIndex: 'quantity', key: 'quantity', sorter: (a, b) => a.quantity - b.quantity },
     { title: `买入价格（${CURRENCY_UNIT}）`, dataIndex: 'purchasePrice', key: 'purchasePrice', render: (val: number) => val?.toFixed(2) ?? '-', sorter: (a, b) => a.purchasePrice - b.purchasePrice },
     { title: '供应商', dataIndex: 'supplier', key: 'supplier', render: (v: string | null) => v ?? '-' },
-    { title: '位置', dataIndex: 'location', key: 'location', render: (v: string | null) => v ?? '-' },
     { title: '操作', key: 'action', width: 160, render: (_: unknown, record: InboundRecord) => (<Space><a onClick={() => { setEditingRecord(record); setFormOpen(true); }}>编辑</a><Popconfirm title="确认删除" description="删除入库记录将减少对应库存数量，确定要删除吗？" onConfirm={() => handleDelete(record.id)} okText="确认" cancelText="取消"><a style={{ color: '#ff4d4f' }}>删除</a></Popconfirm></Space>) },
   ];
 
