@@ -61,7 +61,6 @@ const OutboundList: React.FC = () => {
     { title: `售出价格（${CURRENCY_UNIT}）`, dataIndex: 'sellingPrice', key: 'sellingPrice', render: (val: number) => val?.toFixed(2) ?? '-', sorter: (a, b) => a.sellingPrice - b.sellingPrice },
     { title: '位置', key: 'location', render: (_: unknown, record) => { if (record.warehouse) return `${record.warehouse}-${record.shelf}-${record.layer}`; const l = locationMap[record.locationId]; return l ? `${l.warehouse}-${l.shelf}-${l.layer}` : '-'; } },
     { title: '买家', dataIndex: 'buyer', key: 'buyer', render: (v: string | null) => v ?? '-' },
-    { title: '来源', key: 'source', width: 100, render: (_: unknown, record: OutboundRecord) => (record.buyer && record.buyer.includes('盘点调整')) ? <Tag color="orange">盘点</Tag> : <Tag color="blue">正常</Tag> },
     { title: '操作', key: 'action', width: 160, render: (_: unknown, record: OutboundRecord) => (<Space><a onClick={() => { setEditingRecord(record); setFormOpen(true); }}>编辑</a><Popconfirm title="确认删除" description="删除出库记录将增加对应库存数量，确定要删除吗？" onConfirm={() => handleDelete(record.id)} okText="确认" cancelText="取消"><a style={{ color: '#ff4d4f' }}>删除</a></Popconfirm></Space>) },
   ];
 
