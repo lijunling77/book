@@ -29,6 +29,7 @@ const OutboundForm: React.FC<OutboundFormProps> = ({ open, record, onClose, onSu
         });
       } else {
         form.resetFields();
+        form.setFieldValue('outboundDate', dayjs());
       }
     }
   }, [open, record, form]);

@@ -47,6 +47,7 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
         }
       } else {
         form.resetFields();
+        form.setFieldValue('inboundDate', dayjs());
         setSelectedBook(null);
       }
     }
