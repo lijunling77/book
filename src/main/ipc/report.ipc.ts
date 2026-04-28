@@ -25,7 +25,7 @@ export function registerReportIpcHandlers(): void {
       }
 
       // 转换为中文列名
-      const rows = data.map((r: Record<string, unknown>) => ({
+      const rows = data.map((r) => ({
         '书名': r.bookTitle,
         '作者': r.author ?? '-',
         '位置': r.locations,
