@@ -157,4 +157,5 @@ export const importApi = {
 
 export const reportApi = {
   getData: (dateRange?: DateRange): Promise<unknown> => invoke(REPORT_CHANNELS.GET_DATA, dateRange),
+  export: (dateRange?: DateRange, format?: ExportFormat): Promise<{ filePath?: string; canceled?: boolean }> => invoke(REPORT_CHANNELS.EXPORT, dateRange, format),
 };

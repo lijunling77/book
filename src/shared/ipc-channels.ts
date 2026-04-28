@@ -137,6 +137,7 @@ export const IMPORT_CHANNELS = {
 
 export const REPORT_CHANNELS = {
   GET_DATA: 'report:getData',
+  EXPORT: 'report:export',
 } as const;
 
 // ============================================================

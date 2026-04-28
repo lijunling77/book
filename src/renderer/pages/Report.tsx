@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Table, DatePicker, Space, Spin, Alert } from 'antd';
+import { Typography, Table, DatePicker, Space, Spin, Alert, Button, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import { reportApi } from '../utils/ipc';
+import type { ExportFormat } from '../../shared/types';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
@@ -35,6 +37,22 @@ const Report: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async (format: ExportFormat) => {
+    setExporting(true);
+    try {
+      const dr = dateRange ? { startDate: dateRange[0].format('YYYY-MM-DD'), endDate: dateRange[1].format('YYYY-MM-DD') } : undefined;
+      const result = await reportApi.export(dr, format);
+      if (result.canceled) return;
+      if (result.filePath) message.success(`导出成功：${result.filePath}`);
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '导出失败');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
@@ -70,7 +88,16 @@ const Report: React.FC = () => {
     <div>
       <Title level={4}>综合报表</Title>
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
-      <Space style={{ marginBottom: 24 }}><span>日期范围筛选：</span><RangePicker value={dateRange} onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} allowClear /></Space>
+      <Space style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between' }}>
+        <Space>
+          <span>日期范围筛选：</span>
+          <RangePicker value={dateRange} onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} allowClear />
+        </Space>
+        <Space>
+          <Button icon={<DownloadOutlined />} loading={exporting} onClick={() => handleExport('xlsx')}>导出 Excel</Button>
+          <Button icon={<DownloadOutlined />} loading={exporting} onClick={() => handleExport('csv')}>导出 CSV</Button>
+        </Space>
+      </Space>
       {loading ? <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div> : (
         <Table columns={columns} dataSource={data} rowKey={(_, index) => `report-${index}`} size="small" scroll={{ x: 1800 }} pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'], showTotal: (total) => `共 ${total} 条` }} />
       )}
