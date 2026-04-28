@@ -40,16 +40,16 @@ export class ReportService {
 
     const combos = db
       .select({
-        bookId: stock.bookId,
+        bookId: books.id,
         bookTitle: books.title,
         author: books.author,
         totalQuantity: sql<number>`COALESCE(SUM(${stock.quantity}), 0)`,
         locations: sql<string>`GROUP_CONCAT(DISTINCT ${locations.warehouse} || '-' || ${locations.shelf} || '-' || ${locations.layer})`,
       })
-      .from(stock)
-      .innerJoin(books, sql`${stock.bookId} = ${books.id}`)
-      .innerJoin(locations, sql`${stock.locationId} = ${locations.id}`)
-      .groupBy(stock.bookId)
+      .from(books)
+      .leftJoin(stock, sql`${stock.bookId} = ${books.id}`)
+      .leftJoin(locations, sql`${stock.locationId} = ${locations.id}`)
+      .groupBy(books.id)
       .all();
 
     return combos.map((combo) => {
