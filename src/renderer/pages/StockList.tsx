@@ -19,7 +19,17 @@ const StockList: React.FC = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const handleFilterChange = (key: string, value: string | undefined) => { setFilter({ [key]: value }); setPage(1, pageSize); };
+  const handleFilterChange = (key: string, value: string | undefined) => {
+    setFilter({ [key]: value });
+    setPage(1, pageSize);
+    // 筛选变化后立即重新加载
+    const newFilter = { ...filter, [key]: value, page: 1, pageSize };
+    if (viewMode === 'detail') {
+      fetchStocks(newFilter);
+    } else {
+      fetchSummary(newFilter);
+    }
+  };
 
   const priceRender = (val: number | null) => val !== null && val !== undefined ? `${formatPriceValue(val)} ${CURRENCY_UNIT}` : NO_DATA_TEXT;
 
