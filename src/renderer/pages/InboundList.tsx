@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Button, Space, Typography, Popconfirm, message, Alert, DatePicker, Select } from 'antd';
+import { Table, Button, Space, Typography, Popconfirm, message, Alert, DatePicker, Select, Tag } from 'antd';
 import { PlusOutlined, UnorderedListOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -61,6 +61,7 @@ const InboundList: React.FC = () => {
     { title: `买入价格（${CURRENCY_UNIT}）`, dataIndex: 'purchasePrice', key: 'purchasePrice', render: (val: number) => val?.toFixed(2) ?? '-', sorter: (a, b) => a.purchasePrice - b.purchasePrice },
     { title: '位置', key: 'location', render: (_: unknown, record) => { if (record.warehouse) return `${record.warehouse}-${record.shelf}-${record.layer}`; const l = locationMap[record.locationId]; return l ? `${l.warehouse}-${l.shelf}-${l.layer}` : '-'; } },
     { title: '供应商', dataIndex: 'supplier', key: 'supplier', render: (v: string | null) => v ?? '-' },
+    { title: '来源', key: 'source', width: 100, render: (_: unknown, record: InboundRecord) => (record.supplier && record.supplier.includes('盘点调整')) ? <Tag color="orange">盘点</Tag> : <Tag color="blue">正常</Tag> },
     { title: '操作', key: 'action', width: 160, render: (_: unknown, record: InboundRecord) => (<Space><a onClick={() => { setEditingRecord(record); setFormOpen(true); }}>编辑</a><Popconfirm title="确认删除" description="删除入库记录将减少对应库存数量，确定要删除吗？" onConfirm={() => handleDelete(record.id)} okText="确认" cancelText="取消"><a style={{ color: '#ff4d4f' }}>删除</a></Popconfirm></Space>) },
   ];
 
