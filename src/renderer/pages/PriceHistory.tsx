@@ -96,7 +96,10 @@ const PriceHistory: React.FC = () => {
           columns={columns}
           dataSource={rows}
           rowKey="bookId"
-          expandable={{ expandedRowRender }}
+          expandable={{
+            expandedRowRender,
+            expandIconColumnIndex: columns.length,
+          }}
           pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 条` }}
         />
       )}
