@@ -181,22 +181,23 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
         width={600}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="bookId"
-            label="书籍"
-            rules={[{ required: true, message: '请选择书籍' }]}
-          >
+          <Form.Item label="书籍" required style={{ marginBottom: 0 }}>
             <Space.Compact style={{ width: '100%' }}>
-              <Select
-                placeholder="请选择书籍"
-                showSearch
-                optionFilterProp="label"
-                disabled={isEdit}
-                onChange={handleBookChange}
-                value={form.getFieldValue('bookId')}
-                style={{ flex: 1 }}
-                options={books.map((b) => ({ value: b.id, label: `${b.title} (${b.isbn})` }))}
-              />
+              <Form.Item
+                name="bookId"
+                noStyle
+                rules={[{ required: true, message: '请选择书籍' }]}
+              >
+                <Select
+                  placeholder="请选择书籍"
+                  showSearch
+                  optionFilterProp="label"
+                  disabled={isEdit}
+                  onChange={handleBookChange}
+                  style={{ flex: 1 }}
+                  options={books.map((b) => ({ value: b.id, label: `${b.title}${b.isbn ? ` (${b.isbn})` : ''}` }))}
+                />
+              </Form.Item>
               {!isEdit && (
                 <Button icon={<PlusOutlined />} onClick={() => setQuickBookOpen(true)}>
                   快速新增
@@ -215,23 +216,24 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
               options={editions.map((e) => ({ value: e.id, label: e.name }))}
             />
           </Form.Item>
-          <Form.Item
-            name="locationId"
-            label="目标位置"
-            rules={[{ required: true, message: '请选择位置' }]}
-          >
+          <Form.Item label="目标位置" required style={{ marginBottom: 0 }}>
             <Space.Compact style={{ width: '100%' }}>
-              <Select
-                placeholder="请选择位置"
-                showSearch
-                optionFilterProp="label"
-                value={form.getFieldValue('locationId')}
-                style={{ flex: 1 }}
-                options={locations.map((l) => ({
-                  value: l.id,
-                  label: `${l.warehouse} - ${l.shelf} - ${l.layer}`,
-                }))}
-              />
+              <Form.Item
+                name="locationId"
+                noStyle
+                rules={[{ required: true, message: '请选择位置' }]}
+              >
+                <Select
+                  placeholder="请选择位置"
+                  showSearch
+                  optionFilterProp="label"
+                  style={{ flex: 1 }}
+                  options={locations.map((l) => ({
+                    value: l.id,
+                    label: `${l.warehouse} - ${l.shelf} - ${l.layer}`,
+                  }))}
+                />
+              </Form.Item>
               <Button icon={<PlusOutlined />} onClick={() => setQuickLocationOpen(true)}>
                 快速新增
               </Button>
