@@ -199,7 +199,15 @@ export class ImportService {
         const title = (row['书名'] ?? '').toString().trim();
         const author = (row['作者'] ?? '').toString().trim() || null;
         const location = (row['存放位置'] ?? '').toString().trim() || null;
-        const inboundDate = (row['入库日期'] ?? '').toString().trim();
+        const inboundDateRaw = row['入库日期'] ?? '';
+        let inboundDate: string;
+        if (typeof inboundDateRaw === 'number') {
+          // Excel 日期数字转字符串
+          const excelDate = new Date((inboundDateRaw - 25569) * 86400 * 1000);
+          inboundDate = excelDate.toISOString().slice(0, 10);
+        } else {
+          inboundDate = inboundDateRaw.toString().trim();
+        }
         const quantityStr = (row['数量'] ?? '').toString().trim();
         const purchasePriceStr = (row['买入价格'] ?? '').toString().trim();
         const supplier = (row['供应商'] ?? '').toString().trim() || null;
