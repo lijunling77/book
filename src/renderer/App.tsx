@@ -63,6 +63,10 @@ const eyeCareTheme = {
     InputNumber: {
       colorBgContainer: '#ffffff',
     },
+    Button: {
+      controlOutline: 'transparent',
+      controlTmpOutline: 'transparent',
+    },
   },
 };
 
