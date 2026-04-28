@@ -7,18 +7,18 @@ const { Header, Sider, Content } = AntLayout;
 
 const Layout: React.FC = () => {
   return (
-    <AntLayout style={{ minHeight: '100vh', background: '#ede8dc' }}>
+    <AntLayout style={{ minHeight: '100vh', background: '#eef1f5' }}>
       <Header
         style={{
           display: 'flex',
           alignItems: 'center',
           padding: '0 24px',
-          background: '#4a6741',
+          background: '#3d5a80',
           height: 48,
           lineHeight: '48px',
         }}
       >
-        <Typography.Title level={5} style={{ color: '#f5f0e8', margin: 0, fontWeight: 500 }}>
+        <Typography.Title level={5} style={{ color: '#f0f4f8', margin: 0, fontWeight: 500 }}>
           书籍管理系统
         </Typography.Title>
       </Header>
@@ -26,8 +26,8 @@ const Layout: React.FC = () => {
         <Sider
           width={180}
           style={{
-            background: '#f5f0e8',
-            borderRight: '1px solid #d4cdb8',
+            background: '#f7f8fa',
+            borderRight: '1px solid #d9dee4',
           }}
         >
           <Sidebar />
@@ -38,7 +38,7 @@ const Layout: React.FC = () => {
               padding: 20,
               margin: 0,
               minHeight: 280,
-              background: '#faf6ee',
+              background: '#ffffff',
               borderRadius: 6,
               overflow: 'auto',
             }}

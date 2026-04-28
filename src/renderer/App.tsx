@@ -20,48 +20,48 @@ import Report from './pages/Report';
 
 const eyeCareTheme = {
   token: {
-    colorPrimary: '#5b8c5a',
-    colorBgContainer: '#f5f0e8',
-    colorBgElevated: '#faf6ee',
-    colorBgLayout: '#ede8dc',
-    colorText: '#3d3929',
-    colorTextSecondary: '#6b6452',
-    colorBorder: '#d4cdb8',
-    colorBorderSecondary: '#e0d9c8',
+    colorPrimary: '#5b7e9f',
+    colorBgContainer: '#f7f8fa',
+    colorBgElevated: '#ffffff',
+    colorBgLayout: '#eef1f5',
+    colorText: '#2c3e50',
+    colorTextSecondary: '#6b7b8d',
+    colorBorder: '#d9dee4',
+    colorBorderSecondary: '#e8ecf0',
     borderRadius: 6,
     fontSize: 14,
   },
   components: {
     Table: {
-      headerBg: '#e8e2d2',
-      headerColor: '#3d3929',
-      rowHoverBg: '#ece6d6',
-      borderColor: '#d4cdb8',
+      headerBg: '#e8ecf2',
+      headerColor: '#2c3e50',
+      rowHoverBg: '#edf0f5',
+      borderColor: '#d9dee4',
     },
     Menu: {
-      itemBg: '#f5f0e8',
-      itemSelectedBg: '#ddd6c2',
-      itemSelectedColor: '#3d5a3d',
-      itemHoverBg: '#ece6d6',
+      itemBg: 'transparent',
+      itemSelectedBg: '#dce3ed',
+      itemSelectedColor: '#3a6b9f',
+      itemHoverBg: '#e4e9f0',
     },
     Card: {
-      colorBgContainer: '#faf6ee',
+      colorBgContainer: '#ffffff',
     },
     Modal: {
-      contentBg: '#faf6ee',
-      headerBg: '#faf6ee',
+      contentBg: '#ffffff',
+      headerBg: '#ffffff',
     },
     Input: {
-      colorBgContainer: '#fdfaf2',
+      colorBgContainer: '#ffffff',
     },
     Select: {
-      colorBgContainer: '#fdfaf2',
+      colorBgContainer: '#ffffff',
     },
     DatePicker: {
-      colorBgContainer: '#fdfaf2',
+      colorBgContainer: '#ffffff',
     },
     InputNumber: {
-      colorBgContainer: '#fdfaf2',
+      colorBgContainer: '#ffffff',
     },
   },
 };
