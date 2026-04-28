@@ -16,7 +16,6 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
   const [form] = Form.useForm();
   const isEdit = !!record;
   const [books, setBooks] = useState<Book[]>([]);
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [quickBookOpen, setQuickBookOpen] = useState(false);
   const [quickBookTitle, setQuickBookTitle] = useState('');
   const [quickBookAuthor, setQuickBookAuthor] = useState('');
@@ -37,18 +36,11 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
           quantity: record.quantity,
           purchasePrice: record.purchasePrice,
           supplier: record.supplier ?? '',
-          location: '',
+          location: record.location ?? '',
         });
-        // 加载选中书籍的当前位置
-        const book = books.find((b) => b.id === record.bookId);
-        if (book) {
-          setSelectedBook(book);
-          form.setFieldValue('location', book.location ?? '');
-        }
       } else {
         form.resetFields();
         form.setFieldValue('inboundDate', dayjs());
-        setSelectedBook(null);
       }
     }
   }, [open, record, form]);
@@ -72,33 +64,18 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
     finally { setQuickBookLoading(false); }
   };
 
-  const handleBookChange = (bookId: string) => {
-    const book = books.find((b) => b.id === bookId);
-    setSelectedBook(book ?? null);
-    if (book) {
-      form.setFieldValue('location', book.location ?? '');
-    }
-  };
-
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
       const dateStr = values.inboundDate ? values.inboundDate.format('YYYY-MM-DD') : '';
-      const bookId = isEdit && record ? record.bookId : values.bookId;
-
-      // 如果位置有变化，更新书籍位置
-      const newLocation = values.location?.trim() || null;
-      const currentBook = books.find((b) => b.id === bookId);
-      if (currentBook && newLocation !== (currentBook.location ?? null)) {
-        await bookApi.update(bookId, { location: newLocation });
-      }
+      const locationValue = values.location?.trim() || null;
 
       if (isEdit && record) {
-        const updateData: UpdateInboundInput = { inboundDate: dateStr, quantity: values.quantity, purchasePrice: values.purchasePrice, supplier: values.supplier || null };
+        const updateData: UpdateInboundInput = { inboundDate: dateStr, quantity: values.quantity, purchasePrice: values.purchasePrice, supplier: values.supplier || null, location: locationValue };
         await inboundApi.update(record.id, updateData);
         message.success('入库记录更新成功');
       } else {
-        const createData: CreateInboundInput = { bookId: values.bookId, inboundDate: dateStr, quantity: values.quantity, purchasePrice: values.purchasePrice, supplier: values.supplier || null };
+        const createData: CreateInboundInput = { bookId: values.bookId, inboundDate: dateStr, quantity: values.quantity, purchasePrice: values.purchasePrice, supplier: values.supplier || null, location: locationValue };
         await inboundApi.create(createData);
         message.success('入库记录创建成功');
       }
@@ -114,7 +91,7 @@ const InboundForm: React.FC<InboundFormProps> = ({ open, record, onClose, onSucc
           <Form.Item label="书籍" required style={{ marginBottom: 0 }}>
             <Space.Compact style={{ width: '100%' }}>
               <Form.Item name="bookId" noStyle rules={[{ required: true, message: '请选择书籍' }]}>
-                <Select placeholder="请选择书籍" showSearch optionFilterProp="label" disabled={isEdit} onChange={handleBookChange} style={{ flex: 1 }} options={books.map((b) => ({ value: b.id, label: b.title }))} />
+                <Select placeholder="请选择书籍" showSearch optionFilterProp="label" disabled={isEdit} style={{ flex: 1 }} options={books.map((b) => ({ value: b.id, label: b.title }))} />
               </Form.Item>
               {!isEdit && <Button icon={<PlusOutlined />} onClick={() => setQuickBookOpen(true)}>快速新增</Button>}
             </Space.Compact>

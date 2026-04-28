@@ -6,7 +6,7 @@
 import { eq, like, or, count } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase, getSqliteDatabase } from '../db';
-import { books, stock, inboundRecords, outboundRecords, locationDict } from '../db/schema';
+import { books, stock, inboundRecords, outboundRecords } from '../db/schema';
 import { ERROR_MESSAGES, DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../shared/constants';
 import type {
   Book,
@@ -16,22 +16,6 @@ import type {
   PaginationInput,
   PaginatedResult,
 } from '../../shared/types';
-
-/**
- * 如果位置不在字典里，自动添加
- */
-function syncLocationDict(location: string | null | undefined): void {
-  if (!location || !location.trim()) return;
-  const db = getDatabase();
-  const trimmed = location.trim();
-  const existing = db.select().from(locationDict).where(eq(locationDict.name, trimmed)).get();
-  if (!existing) {
-    db.insert(locationDict).values({
-      id: uuidv4(),
-      name: trimmed,
-    }).run();
-  }
-}
 
 export class BookService {
   /**
@@ -54,14 +38,11 @@ export class BookService {
       title: input.title,
       author: input.author ?? null,
       description: input.description ?? null,
-      location: input.location ?? null,
       createdAt: now,
       updatedAt: now,
     };
 
     db.insert(books).values(newBook).run();
-
-    syncLocationDict(input.location);
 
     const created = db.select().from(books).where(eq(books.id, id)).get()!;
 
@@ -85,13 +66,8 @@ export class BookService {
     if (input.title !== undefined) updateData.title = input.title;
     if (input.author !== undefined) updateData.author = input.author;
     if (input.description !== undefined) updateData.description = input.description;
-    if (input.location !== undefined) updateData.location = input.location;
 
     db.update(books).set(updateData).where(eq(books.id, id)).run();
-
-    if (input.location !== undefined) {
-      syncLocationDict(input.location);
-    }
 
     const updated = db.select().from(books).where(eq(books.id, id)).get()!;
 

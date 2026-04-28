@@ -16,7 +16,7 @@ import type { DateRange } from '../../shared/types';
 export interface ReportRow {
   bookTitle: string;
   author: string | null;
-  location: string | null;
+  locations: string | null;
   totalQuantity: number;
   inboundTotalQuantity: number;
   inboundTotalAmount: number;
@@ -42,7 +42,6 @@ export class ReportService {
         bookId: books.id,
         bookTitle: books.title,
         author: books.author,
-        location: books.location,
         totalQuantity: sql<number>`COALESCE(${stock.quantity}, 0)`,
       })
       .from(books)
@@ -55,10 +54,19 @@ export class ReportService {
       const outboundStats = this.getOutboundStats(bookId, dateRange);
       const priceStats = this.getPriceStats(bookId);
 
+      // Aggregate distinct locations from inbound_records
+      const locResult = db
+        .select({
+          locations: sql<string | null>`GROUP_CONCAT(DISTINCT ${inboundRecords.location})`,
+        })
+        .from(inboundRecords)
+        .where(eq(inboundRecords.bookId, bookId))
+        .get();
+
       return {
         bookTitle: combo.bookTitle,
         author: combo.author,
-        location: combo.location,
+        locations: locResult?.locations ?? null,
         totalQuantity: combo.totalQuantity,
         inboundTotalQuantity: inboundStats.totalQuantity,
         inboundTotalAmount: inboundStats.totalAmount,

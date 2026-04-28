@@ -21,7 +21,6 @@ const CREATE_TABLES_SQL = `
     title TEXT NOT NULL UNIQUE,
     author TEXT,
     description TEXT,
-    location TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );
@@ -41,6 +40,7 @@ const CREATE_TABLES_SQL = `
     quantity INTEGER NOT NULL CHECK(quantity > 0),
     purchase_price REAL NOT NULL CHECK(purchase_price >= 0),
     supplier TEXT,
+    location TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );

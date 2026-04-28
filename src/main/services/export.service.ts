@@ -53,7 +53,7 @@ export class ExportService {
       .select({
         书名: books.title,
         作者: books.author,
-        存放位置: books.location,
+        存放位置: inboundRecords.location,
         入库日期: inboundRecords.inboundDate,
         数量: inboundRecords.quantity,
         买入价格: inboundRecords.purchasePrice,
@@ -85,7 +85,6 @@ export class ExportService {
       .select({
         书名: books.title,
         作者: books.author,
-        存放位置: books.location,
         出库日期: outboundRecords.outboundDate,
         数量: outboundRecords.quantity,
         售出价格: outboundRecords.sellingPrice,
@@ -114,7 +113,6 @@ export class ExportService {
       .select({
         书名: books.title,
         作者: books.author,
-        存放位置: books.location,
         库存数量: stock.quantity,
       })
       .from(stock)

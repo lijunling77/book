@@ -6,7 +6,7 @@ import type { Book, CreateInboundInput, BatchResultSummary } from '../../shared/
 import { bookApi, inboundApi } from '../utils/ipc';
 
 interface BatchInboundFormProps { open: boolean; onClose: () => void; onSuccess: () => void; }
-interface InboundRow { key: number; bookId?: string; inboundDate?: dayjs.Dayjs; quantity?: number; purchasePrice?: number; supplier?: string; }
+interface InboundRow { key: number; bookId?: string; inboundDate?: dayjs.Dayjs; quantity?: number; purchasePrice?: number; supplier?: string; location?: string; }
 
 const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSuccess }) => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -29,7 +29,7 @@ const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSu
     const inputs: CreateInboundInput[] = [];
     for (const row of rows) {
       if (!row.bookId || !row.inboundDate || !row.quantity || row.purchasePrice == null) { message.warning('请填写所有必填字段'); return; }
-      inputs.push({ bookId: row.bookId, inboundDate: row.inboundDate.format('YYYY-MM-DD'), quantity: row.quantity, purchasePrice: row.purchasePrice, supplier: row.supplier || null });
+      inputs.push({ bookId: row.bookId, inboundDate: row.inboundDate.format('YYYY-MM-DD'), quantity: row.quantity, purchasePrice: row.purchasePrice, supplier: row.supplier || null, location: row.location?.trim() || null });
     }
     setSubmitting(true);
     try {
@@ -57,6 +57,7 @@ const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSu
               <InputNumber placeholder="数量" min={1} style={{ width: 80 }} value={row.quantity} onChange={(v) => updateRow(row.key, 'quantity', v)} />
               <InputNumber placeholder="价格" min={0} step={0.01} precision={2} style={{ width: 100 }} value={row.purchasePrice} onChange={(v) => updateRow(row.key, 'purchasePrice', v)} />
               <Input placeholder="供应商" style={{ width: 100 }} value={row.supplier} onChange={(e) => updateRow(row.key, 'supplier', e.target.value)} />
+              <Input placeholder="位置" style={{ width: 100 }} value={row.location} onChange={(e) => updateRow(row.key, 'location', e.target.value)} />
               {rows.length > 1 && <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeRow(row.key)} />}
             </Space>
           ))}

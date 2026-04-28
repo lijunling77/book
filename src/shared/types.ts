@@ -37,7 +37,6 @@ export interface Book {
   title: string;
   author: string | null;
   description: string | null;
-  location: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,7 +46,6 @@ export interface CreateBookInput {
   title: string;
   author?: string | null;
   description?: string | null;
-  location?: string | null;
 }
 
 /** 更新书籍输入 */
@@ -55,7 +53,6 @@ export interface UpdateBookInput {
   title?: string;
   author?: string;
   description?: string | null;
-  location?: string;
 }
 
 /** 搜索书籍查询 */
@@ -118,6 +115,7 @@ export interface InboundRecord {
   quantity: number;
   purchasePrice: number;
   supplier: string | null;
+  location: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,6 +132,7 @@ export interface CreateInboundInput {
   quantity: number;
   purchasePrice: number;
   supplier?: string | null;
+  location?: string | null;
 }
 
 /** 更新入库记录输入 */
@@ -142,6 +141,7 @@ export interface UpdateInboundInput {
   quantity?: number;
   purchasePrice?: number;
   supplier?: string | null;
+  location?: string | null;
 }
 
 /** 入库记录筛选条件 */

@@ -15,7 +15,6 @@ export const books = sqliteTable('books', {
   title: text('title').notNull().unique(),
   author: text('author'),
   description: text('description'),
-  location: text('location'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
 });
@@ -44,6 +43,7 @@ export const inboundRecords = sqliteTable('inbound_records', {
   quantity: integer('quantity').notNull(),
   purchasePrice: real('purchase_price').notNull(),
   supplier: text('supplier'),
+  location: text('location'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
 });

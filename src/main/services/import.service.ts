@@ -239,14 +239,10 @@ export class ImportService {
             id: bookId,
             title,
             author,
-            location,
             createdAt: now,
             updatedAt: now,
           }).run();
           book = db.select().from(books).where(eq(books.id, bookId)).get()!;
-        } else if (location) {
-          // 3. 书籍存在且行有位置，更新位置
-          db.update(books).set({ location, updatedAt: now }).where(eq(books.id, book.id)).run();
         }
 
         // 4. 同步位置字典
@@ -269,6 +265,7 @@ export class ImportService {
           quantity,
           purchasePrice,
           supplier,
+          location,
           createdAt: now,
           updatedAt: now,
         }).run();

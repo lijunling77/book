@@ -9,6 +9,7 @@ import { getDatabase, getSqliteDatabase } from '../db';
 import {
   inboundRecords,
   books,
+  locationDict,
 } from '../db/schema';
 import {
   ERROR_MESSAGES,
@@ -27,6 +28,22 @@ import type {
 } from '../../shared/types';
 
 const stockService = new StockService();
+
+/**
+ * 如果位置不在字典里，自动添加
+ */
+function syncLocationDict(location: string | null | undefined): void {
+  if (!location || !location.trim()) return;
+  const db = getDatabase();
+  const trimmed = location.trim();
+  const existing = db.select().from(locationDict).where(eq(locationDict.name, trimmed)).get();
+  if (!existing) {
+    db.insert(locationDict).values({
+      id: uuidv4(),
+      name: trimmed,
+    }).run();
+  }
+}
 
 export class InboundService {
   /**
@@ -52,11 +69,14 @@ export class InboundService {
         quantity: input.quantity,
         purchasePrice: input.purchasePrice,
         supplier: input.supplier ?? null,
+        location: input.location ?? null,
         createdAt: now,
         updatedAt: now,
       };
 
       db.insert(inboundRecords).values(newRecord).run();
+
+      syncLocationDict(input.location);
 
       stockService.adjustStock(input.bookId, input.quantity);
 
@@ -108,11 +128,16 @@ export class InboundService {
       if (input.quantity !== undefined) updateData.quantity = input.quantity;
       if (input.purchasePrice !== undefined) updateData.purchasePrice = input.purchasePrice;
       if (input.supplier !== undefined) updateData.supplier = input.supplier;
+      if (input.location !== undefined) updateData.location = input.location;
 
       db.update(inboundRecords)
         .set(updateData)
         .where(eq(inboundRecords.id, id))
         .run();
+
+      if (input.location !== undefined) {
+        syncLocationDict(input.location);
+      }
 
       const updated = db
         .select()
@@ -205,6 +230,7 @@ export class InboundService {
         quantity: inboundRecords.quantity,
         purchasePrice: inboundRecords.purchasePrice,
         supplier: inboundRecords.supplier,
+        location: inboundRecords.location,
         createdAt: inboundRecords.createdAt,
         updatedAt: inboundRecords.updatedAt,
         bookTitle: books.title,
@@ -229,6 +255,7 @@ export class InboundService {
       quantity: row.quantity,
       purchasePrice: row.purchasePrice,
       supplier: row.supplier,
+      location: row.location,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       bookTitle: row.bookTitle,

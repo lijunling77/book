@@ -28,7 +28,7 @@ export function registerReportIpcHandlers(): void {
       const rows = data.map((r) => ({
         '书名': r.bookTitle,
         '作者': r.author ?? '-',
-        '存放位置': r.location ?? '-',
+        '存放位置': r.locations ?? '-',
         '库存数量': r.totalQuantity,
         '入库总量': r.inboundTotalQuantity,
         '入库总金额': r.inboundTotalAmount,
