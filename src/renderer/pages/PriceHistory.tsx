@@ -67,12 +67,12 @@ const PriceHistory: React.FC = () => {
   }, []);
 
   const columns: ColumnsType<BookPriceRow> = [
-    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', width: 200 },
+    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', width: 200, sorter: (a, b) => a.bookTitle.localeCompare(b.bookTitle) },
     { title: '作者', dataIndex: 'author', key: 'author', width: 120, render: (v: string | null) => v ?? '-' },
-    { title: '最近买入价', dataIndex: 'latestPurchasePrice', key: 'latestPurchasePrice', render: priceRender },
-    { title: '最近售出价', dataIndex: 'latestSellingPrice', key: 'latestSellingPrice', render: priceRender },
-    { title: '平均买入价', dataIndex: 'averagePurchasePrice', key: 'averagePurchasePrice', render: priceRender },
-    { title: '平均售出价', dataIndex: 'averageSellingPrice', key: 'averageSellingPrice', render: priceRender },
+    { title: '最近买入价', dataIndex: 'latestPurchasePrice', key: 'latestPurchasePrice', render: priceRender, sorter: (a, b) => (a.latestPurchasePrice ?? 0) - (b.latestPurchasePrice ?? 0) },
+    { title: '最近售出价', dataIndex: 'latestSellingPrice', key: 'latestSellingPrice', render: priceRender, sorter: (a, b) => (a.latestSellingPrice ?? 0) - (b.latestSellingPrice ?? 0) },
+    { title: '平均买入价', dataIndex: 'averagePurchasePrice', key: 'averagePurchasePrice', render: priceRender, sorter: (a, b) => (a.averagePurchasePrice ?? 0) - (b.averagePurchasePrice ?? 0) },
+    { title: '平均售出价', dataIndex: 'averageSellingPrice', key: 'averageSellingPrice', render: priceRender, sorter: (a, b) => (a.averageSellingPrice ?? 0) - (b.averageSellingPrice ?? 0) },
     {
       title: '买入价范围',
       key: 'priceRange',

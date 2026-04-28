@@ -55,10 +55,10 @@ const OutboundList: React.FC = () => {
   const locationMap = Object.fromEntries(locations.map((l) => [l.id, l]));
 
   const columns: ColumnsType<OutboundRecord & { bookTitle?: string; warehouse?: string; shelf?: string; layer?: string }> = [
-    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', render: (val: string | undefined, record) => val || record.bookId },
-    { title: '出库日期', dataIndex: 'outboundDate', key: 'outboundDate', render: (val: string) => val ?? '-' },
-    { title: '数量', dataIndex: 'quantity', key: 'quantity' },
-    { title: `售出价格（${CURRENCY_UNIT}）`, dataIndex: 'sellingPrice', key: 'sellingPrice', render: (val: number) => val?.toFixed(2) ?? '-' },
+    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', render: (val: string | undefined, record) => val || record.bookId, sorter: (a, b) => (a.bookTitle || '').localeCompare(b.bookTitle || '') },
+    { title: '出库日期', dataIndex: 'outboundDate', key: 'outboundDate', render: (val: string) => val ?? '-', sorter: (a, b) => (a.outboundDate || '').localeCompare(b.outboundDate || '') },
+    { title: '数量', dataIndex: 'quantity', key: 'quantity', sorter: (a, b) => a.quantity - b.quantity },
+    { title: `售出价格（${CURRENCY_UNIT}）`, dataIndex: 'sellingPrice', key: 'sellingPrice', render: (val: number) => val?.toFixed(2) ?? '-', sorter: (a, b) => a.sellingPrice - b.sellingPrice },
     { title: '位置', key: 'location', render: (_: unknown, record) => { if (record.warehouse) return `${record.warehouse}-${record.shelf}-${record.layer}`; const l = locationMap[record.locationId]; return l ? `${l.warehouse}-${l.shelf}-${l.layer}` : '-'; } },
     { title: '买家', dataIndex: 'buyer', key: 'buyer', render: (v: string | null) => v ?? '-' },
     { title: '操作', key: 'action', width: 160, render: (_: unknown, record: OutboundRecord) => (<Space><a onClick={() => { setEditingRecord(record); setFormOpen(true); }}>编辑</a><Popconfirm title="确认删除" description="删除出库记录将增加对应库存数量，确定要删除吗？" onConfirm={() => handleDelete(record.id)} okText="确认" cancelText="取消"><a style={{ color: '#ff4d4f' }}>删除</a></Popconfirm></Space>) },

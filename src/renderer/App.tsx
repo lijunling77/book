@@ -30,6 +30,8 @@ const eyeCareTheme = {
     colorBorderSecondary: '#e8ecf0',
     borderRadius: 6,
     fontSize: 14,
+    controlOutline: 'transparent',
+    controlOutlineWidth: 0,
   },
   components: {
     Table: {
@@ -53,15 +55,18 @@ const eyeCareTheme = {
     },
     Input: {
       colorBgContainer: '#ffffff',
+      activeShadow: 'none',
     },
     Select: {
       colorBgContainer: '#ffffff',
     },
     DatePicker: {
       colorBgContainer: '#ffffff',
+      activeShadow: 'none',
     },
     InputNumber: {
       colorBgContainer: '#ffffff',
+      activeShadow: 'none',
     },
     Button: {
       controlOutline: 'transparent',

@@ -56,9 +56,9 @@ const LocationList: React.FC = () => {
   };
 
   const columns: ColumnsType<Location> = [
-    { title: '仓库名称', dataIndex: 'warehouse', key: 'warehouse' },
-    { title: '书架编号', dataIndex: 'shelf', key: 'shelf' },
-    { title: '层号', dataIndex: 'layer', key: 'layer' },
+    { title: '仓库名称', dataIndex: 'warehouse', key: 'warehouse', sorter: (a, b) => a.warehouse.localeCompare(b.warehouse) },
+    { title: '书架编号', dataIndex: 'shelf', key: 'shelf', sorter: (a, b) => a.shelf.localeCompare(b.shelf) },
+    { title: '层号', dataIndex: 'layer', key: 'layer', sorter: (a, b) => a.layer.localeCompare(b.layer) },
     {
       title: '创建时间',
       dataIndex: 'createdAt',

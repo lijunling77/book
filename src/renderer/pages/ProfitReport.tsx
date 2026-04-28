@@ -42,6 +42,7 @@ const ProfitReport: React.FC = () => {
       key: 'month',
       width: 120,
       render: (val: string) => val || '-',
+      sorter: (a, b) => a.month.localeCompare(b.month),
     },
     {
       title: '入库数量',
