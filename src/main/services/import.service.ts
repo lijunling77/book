@@ -26,7 +26,8 @@ import type {
 export class ImportService {
   getTemplate(format: ImportFileFormat): Buffer {
     const headers = [...IMPORT_TEMPLATE_COLUMNS];
-    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+    const sampleRow = ['示例书名', '示例作者', '这是一本示例书籍'];
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
     worksheet['!cols'] = headers.map(() => ({ wch: 20 }));
 
     const workbook = XLSX.utils.book_new();
@@ -131,7 +132,8 @@ export class ImportService {
    */
   getInboundTemplate(format: ImportFileFormat): Buffer {
     const headers = [...INBOUND_IMPORT_TEMPLATE_COLUMNS];
-    const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+    const sampleRow = ['示例书名', '示例作者', 'A架3层', '2026-01-15', '10', '25.50', '示例供应商'];
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
     worksheet['!cols'] = headers.map(() => ({ wch: 20 }));
 
     const workbook = XLSX.utils.book_new();

@@ -3,10 +3,10 @@
  * 提供仪表盘首页概览数据
  */
 
-import { sql } from 'drizzle-orm';
+import { sql, desc, eq } from 'drizzle-orm';
 import { getDatabase } from '../db';
-import { stock, inboundRecords, outboundRecords } from '../db/schema';
-import type { DashboardData } from '../../shared/types';
+import { stock, inboundRecords, outboundRecords, books } from '../db/schema';
+import type { DashboardData, RecentInboundItem, RecentOutboundItem } from '../../shared/types';
 
 export class DashboardService {
   getData(): DashboardData {
@@ -57,6 +57,52 @@ export class DashboardService {
       .where(sql`${outboundRecords.outboundDate} >= ${monthStart} AND ${outboundRecords.outboundDate} <= ${monthEnd}`)
       .get();
 
+    // 最近5条入库记录
+    const recentInboundRows = db
+      .select({
+        bookTitle: books.title,
+        inboundDate: inboundRecords.inboundDate,
+        quantity: inboundRecords.quantity,
+        purchasePrice: inboundRecords.purchasePrice,
+        location: inboundRecords.location,
+      })
+      .from(inboundRecords)
+      .innerJoin(books, eq(inboundRecords.bookId, books.id))
+      .orderBy(desc(inboundRecords.createdAt))
+      .limit(5)
+      .all();
+
+    const recentInbound: RecentInboundItem[] = recentInboundRows.map((r) => ({
+      bookTitle: r.bookTitle,
+      inboundDate: r.inboundDate,
+      quantity: r.quantity,
+      purchasePrice: r.purchasePrice,
+      location: r.location,
+    }));
+
+    // 最近5条出库记录
+    const recentOutboundRows = db
+      .select({
+        bookTitle: books.title,
+        outboundDate: outboundRecords.outboundDate,
+        quantity: outboundRecords.quantity,
+        sellingPrice: outboundRecords.sellingPrice,
+        buyer: outboundRecords.buyer,
+      })
+      .from(outboundRecords)
+      .innerJoin(books, eq(outboundRecords.bookId, books.id))
+      .orderBy(desc(outboundRecords.createdAt))
+      .limit(5)
+      .all();
+
+    const recentOutbound: RecentOutboundItem[] = recentOutboundRows.map((r) => ({
+      bookTitle: r.bookTitle,
+      outboundDate: r.outboundDate,
+      quantity: r.quantity,
+      sellingPrice: r.sellingPrice,
+      buyer: r.buyer,
+    }));
+
     return {
       totalStockQuantity,
       todayInboundQuantity: todayInboundResult?.totalQuantity ?? 0,
@@ -64,6 +110,8 @@ export class DashboardService {
       todayOutboundQuantity: todayOutboundResult?.totalQuantity ?? 0,
       todayOutboundAmount: todayOutboundResult?.totalAmount ?? 0,
       monthlyProfit: (monthlyOutboundRevenueResult?.totalRevenue ?? 0) - (monthlyInboundCostResult?.totalCost ?? 0),
+      recentInbound,
+      recentOutbound,
     };
   }
 

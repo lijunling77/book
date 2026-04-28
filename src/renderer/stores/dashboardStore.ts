@@ -16,6 +16,8 @@ const initialData: DashboardData = {
   todayOutboundQuantity: 0,
   todayOutboundAmount: 0,
   monthlyProfit: 0,
+  recentInbound: [],
+  recentOutbound: [],
 };
 
 export const useDashboardStore = create<DashboardState>((set) => ({

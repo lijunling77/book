@@ -14,15 +14,16 @@ const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSu
   const [nextKey, setNextKey] = useState(2);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<BatchResultSummary | null>(null);
+  const [unifiedDate, setUnifiedDate] = useState<dayjs.Dayjs | null>(dayjs());
 
-  useEffect(() => { if (open) { loadBooks(); setRows([{ key: 1 }]); setNextKey(2); setResult(null); } }, [open]);
+  useEffect(() => { if (open) { loadBooks(); setRows([{ key: 1, inboundDate: dayjs() }]); setNextKey(2); setResult(null); setUnifiedDate(dayjs()); } }, [open]);
 
   const loadBooks = async () => { try { const r = await bookApi.list({ page: 1, pageSize: 1000 }); setBooks(r.data); } catch {} };
 
   const updateRow = (key: number, field: string, value: unknown) => {
     setRows((prev) => prev.map((r) => r.key !== key ? r : { ...r, [field]: value }));
   };
-  const addRow = () => { setRows((prev) => [...prev, { key: nextKey }]); setNextKey((k) => k + 1); };
+  const addRow = () => { setRows((prev) => [...prev, { key: nextKey, inboundDate: unifiedDate ?? undefined }]); setNextKey((k) => k + 1); };
   const removeRow = (key: number) => { setRows((prev) => prev.filter((r) => r.key !== key)); };
 
   const handleSubmit = async () => {
@@ -50,6 +51,20 @@ const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSu
         </div>
       ) : (
         <div>
+          <Space style={{ marginBottom: 16 }} align="center">
+            <span>统一日期：</span>
+            <DatePicker
+              value={unifiedDate}
+              onChange={(date) => {
+                setUnifiedDate(date);
+                if (date) {
+                  setRows((prev) => prev.map((r) => ({ ...r, inboundDate: date })));
+                }
+              }}
+              placeholder="选择统一日期"
+              allowClear
+            />
+          </Space>
           {rows.map((row) => (
             <Space key={row.key} style={{ display: 'flex', marginBottom: 8 }} align="start" wrap>
               <Select placeholder="书籍" style={{ width: 180 }} showSearch optionFilterProp="label" value={row.bookId} onChange={(v) => updateRow(row.key, 'bookId', v)} options={books.map((b) => ({ value: b.id, label: b.title }))} />

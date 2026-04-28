@@ -340,6 +340,24 @@ export interface BackupInfo {
 // 仪表盘
 // ============================================================
 
+/** 最近入库记录摘要 */
+export interface RecentInboundItem {
+  bookTitle: string;
+  inboundDate: string;
+  quantity: number;
+  purchasePrice: number;
+  location: string | null;
+}
+
+/** 最近出库记录摘要 */
+export interface RecentOutboundItem {
+  bookTitle: string;
+  outboundDate: string;
+  quantity: number;
+  sellingPrice: number;
+  buyer: string | null;
+}
+
 /** 仪表盘数据 */
 export interface DashboardData {
   totalStockQuantity: number;
@@ -348,6 +366,8 @@ export interface DashboardData {
   todayOutboundQuantity: number;
   todayOutboundAmount: number;
   monthlyProfit: number;
+  recentInbound: RecentInboundItem[];
+  recentOutbound: RecentOutboundItem[];
 }
 
 // ============================================================
