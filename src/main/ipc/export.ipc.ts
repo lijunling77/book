@@ -1,13 +1,10 @@
 /**
  * 数据导出 IPC 处理器
- * 注册导出相关的 IPC 通道，调用 ExportService 处理业务逻辑
- * 导出结果为文件 Buffer，通过 IPC 返回给渲染进程
+ * 使用系统保存对话框，文件名为中文+日期格式
  */
 
-import { ipcMain, app } from 'electron';
-import path from 'path';
+import { ipcMain, dialog } from 'electron';
 import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
 import { EXPORT_CHANNELS } from '../../shared/ipc-channels';
 import { ExportService } from '../services/export.service';
 import type {
@@ -20,53 +17,62 @@ import type {
 
 const exportService = new ExportService();
 
-/**
- * 将导出 Buffer 写入临时文件并返回文件路径
- */
-function saveExportBuffer(buffer: Buffer, format: ExportFormat, prefix: string): string {
+function getDateStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function saveWithDialog(buffer: Buffer, format: ExportFormat, chineseName: string): Promise<{ filePath?: string; canceled?: boolean }> {
   const ext = format === 'csv' ? '.csv' : '.xlsx';
-  const fileName = `${prefix}_${uuidv4()}${ext}`;
-  const exportDir = path.join(app.getPath('temp'), 'book-management-exports');
-  if (!fs.existsSync(exportDir)) {
-    fs.mkdirSync(exportDir, { recursive: true });
+  const defaultName = `${chineseName}_${getDateStr()}${ext}`;
+
+  const result = await dialog.showSaveDialog({
+    title: `导出${chineseName}`,
+    defaultPath: defaultName,
+    filters: format === 'csv'
+      ? [{ name: 'CSV', extensions: ['csv'] }]
+      : [{ name: 'Excel', extensions: ['xlsx'] }],
+  });
+
+  if (result.canceled || !result.filePath) {
+    return { canceled: true };
   }
-  const filePath = path.join(exportDir, fileName);
-  fs.writeFileSync(filePath, buffer);
-  return filePath;
+
+  fs.writeFileSync(result.filePath, buffer);
+  return { filePath: result.filePath };
 }
 
 export function registerExportIpcHandlers(): void {
-  ipcMain.handle(EXPORT_CHANNELS.INBOUND, (_event, filter: InboundFilter | undefined, format: ExportFormat) => {
+  ipcMain.handle(EXPORT_CHANNELS.INBOUND, async (_event, filter: InboundFilter | undefined, format: ExportFormat) => {
     try {
       const buffer = exportService.exportInbound(filter, format);
-      return saveExportBuffer(buffer, format, 'inbound');
+      return await saveWithDialog(buffer, format, '入库记录');
     } catch (error) {
       return { error: true, message: error instanceof Error ? error.message : '未知错误' };
     }
   });
 
-  ipcMain.handle(EXPORT_CHANNELS.OUTBOUND, (_event, filter: OutboundFilter | undefined, format: ExportFormat) => {
+  ipcMain.handle(EXPORT_CHANNELS.OUTBOUND, async (_event, filter: OutboundFilter | undefined, format: ExportFormat) => {
     try {
       const buffer = exportService.exportOutbound(filter, format);
-      return saveExportBuffer(buffer, format, 'outbound');
+      return await saveWithDialog(buffer, format, '出库记录');
     } catch (error) {
       return { error: true, message: error instanceof Error ? error.message : '未知错误' };
     }
   });
 
-  ipcMain.handle(EXPORT_CHANNELS.STOCK, (_event, filter: StockFilter | undefined, format: ExportFormat) => {
+  ipcMain.handle(EXPORT_CHANNELS.STOCK, async (_event, filter: StockFilter | undefined, format: ExportFormat) => {
     try {
       const buffer = exportService.exportStock(filter, format);
-      return saveExportBuffer(buffer, format, 'stock');
+      return await saveWithDialog(buffer, format, '库存信息');
     } catch (error) {
       return { error: true, message: error instanceof Error ? error.message : '未知错误' };
     }
   });
 
-  ipcMain.handle(EXPORT_CHANNELS.PROFIT, (_event, filter: ProfitFilter | undefined, format: ExportFormat) => {
+  ipcMain.handle(EXPORT_CHANNELS.PROFIT, async (_event, filter: ProfitFilter | undefined, format: ExportFormat) => {
     try {
       const buffer = exportService.exportProfit(filter, format);
-      return saveExportBuffer(buffer, format, 'profit');
+      return await saveWithDialog(buffer, format, '利润统计');
     } catch (error) {
       return { error: true, message: error instanceof Error ? error.message : '未知错误' };
     }

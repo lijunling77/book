@@ -1,31 +1,123 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Select, Space, Table, Card, Statistic, Row, Col, Alert, Spin, Empty } from 'antd';
+import { Typography, Table, Alert, Spin, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Book, PurchasePriceHistory, SellingPriceHistory, PriceStats } from '../../shared/types';
 import { bookApi, priceApi } from '../utils/ipc';
 import { CURRENCY_UNIT, NO_DATA_TEXT } from '../../shared/constants';
 import { formatPriceValue, formatDate } from '../utils/format';
 
+interface BookPriceRow {
+  bookId: string;
+  bookTitle: string;
+  author: string | null;
+  latestPurchasePrice: number | null;
+  latestSellingPrice: number | null;
+  averagePurchasePrice: number | null;
+  averageSellingPrice: number | null;
+  purchasePriceMin: number | null;
+  purchasePriceMax: number | null;
+}
+
+const priceRender = (val: number | null) =>
+  val !== null && val !== undefined ? `¥${formatPriceValue(val)}` : NO_DATA_TEXT;
+
 const PriceHistory: React.FC = () => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [selectedBookId, setSelectedBookId] = useState<string | undefined>();
-  const [purchaseHistory, setPurchaseHistory] = useState<PurchasePriceHistory[]>([]);
-  const [sellingHistory, setSellingHistory] = useState<SellingPriceHistory[]>([]);
-  const [stats, setStats] = useState<PriceStats | null>(null);
+  const [rows, setRows] = useState<BookPriceRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { bookApi.list({ page: 1, pageSize: 1000 }).then((r) => setBooks(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    bookApi.list({ page: 1, pageSize: 1000 })
+      .then(async (result) => {
+        const bookRows: BookPriceRow[] = [];
+        for (const book of result.data) {
+          try {
+            const stats = await priceApi.stats(book.id);
+            bookRows.push({
+              bookId: book.id,
+              bookTitle: book.title,
+              author: book.author,
+              latestPurchasePrice: stats.latestPurchasePrice,
+              latestSellingPrice: stats.latestSellingPrice,
+              averagePurchasePrice: stats.averagePurchasePrice,
+              averageSellingPrice: stats.averageSellingPrice,
+              purchasePriceMin: stats.purchasePriceMin,
+              purchasePriceMax: stats.purchasePriceMax,
+            });
+          } catch {
+            bookRows.push({
+              bookId: book.id,
+              bookTitle: book.title,
+              author: book.author,
+              latestPurchasePrice: null,
+              latestSellingPrice: null,
+              averagePurchasePrice: null,
+              averageSellingPrice: null,
+              purchasePriceMin: null,
+              purchasePriceMax: null,
+            });
+          }
+        }
+        setRows(bookRows);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : '获取数据失败'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const columns: ColumnsType<BookPriceRow> = [
+    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', width: 200 },
+    { title: '作者', dataIndex: 'author', key: 'author', width: 120, render: (v: string | null) => v ?? '-' },
+    { title: '最近买入价', dataIndex: 'latestPurchasePrice', key: 'latestPurchasePrice', render: priceRender },
+    { title: '最近售出价', dataIndex: 'latestSellingPrice', key: 'latestSellingPrice', render: priceRender },
+    { title: '平均买入价', dataIndex: 'averagePurchasePrice', key: 'averagePurchasePrice', render: priceRender },
+    { title: '平均售出价', dataIndex: 'averageSellingPrice', key: 'averageSellingPrice', render: priceRender },
+    {
+      title: '买入价范围',
+      key: 'priceRange',
+      render: (_: unknown, r: BookPriceRow) =>
+        r.purchasePriceMin !== null ? `¥${formatPriceValue(r.purchasePriceMin)} ~ ¥${formatPriceValue(r.purchasePriceMax)}` : NO_DATA_TEXT,
+    },
+  ];
+
+  const expandedRowRender = (record: BookPriceRow) => <ExpandedDetail bookId={record.bookId} />;
+
+  return (
+    <div>
+      <Typography.Title level={4}>价格历史</Typography.Title>
+      {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>
+      ) : rows.length === 0 ? (
+        <Empty description="暂无书籍数据" />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={rows}
+          rowKey="bookId"
+          expandable={{ expandedRowRender }}
+          pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (t) => `共 ${t} 条` }}
+        />
+      )}
+    </div>
+  );
+};
+
+/** 展开的买入/售出详情 */
+const ExpandedDetail: React.FC<{ bookId: string }> = ({ bookId }) => {
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchasePriceHistory[]>([]);
+  const [sellingHistory, setSellingHistory] = useState<SellingPriceHistory[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (selectedBookId) {
-      setLoading(true); setError(null);
-      Promise.all([priceApi.purchaseHistory(selectedBookId), priceApi.sellingHistory(selectedBookId), priceApi.stats(selectedBookId)])
-        .then(([ph, sh, st]) => { setPurchaseHistory(ph); setSellingHistory(sh); setStats(st); })
-        .catch((err) => setError(err instanceof Error ? err.message : '获取价格历史失败'))
-        .finally(() => setLoading(false));
-    } else { setPurchaseHistory([]); setSellingHistory([]); setStats(null); }
-  }, [selectedBookId]);
+    Promise.all([priceApi.purchaseHistory(bookId), priceApi.sellingHistory(bookId)])
+      .then(([ph, sh]) => { setPurchaseHistory(ph); setSellingHistory(sh); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [bookId]);
+
+  if (loading) return <Spin size="small" />;
 
   const purchaseColumns: ColumnsType<PurchasePriceHistory> = [
     { title: '入库日期', dataIndex: 'inboundDate', key: 'inboundDate', render: formatDate },
@@ -41,31 +133,28 @@ const PriceHistory: React.FC = () => {
     { title: '买家', dataIndex: 'buyer', key: 'buyer', render: (v: string | null) => v ?? '-' },
   ];
 
-  const priceDisplay = (val: number | null) => val !== null && val !== undefined ? `${formatPriceValue(val)} ${CURRENCY_UNIT}` : NO_DATA_TEXT;
-
   return (
-    <div>
-      <Typography.Title level={4}>价格历史</Typography.Title>
-      {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Select placeholder="选择书籍" allowClear showSearch optionFilterProp="label" style={{ width: 240 }} value={selectedBookId} onChange={setSelectedBookId} options={books.map((b) => ({ value: b.id, label: b.title }))} />
-      </Space>
-      {!selectedBookId ? <Empty description="请选择书籍以查看价格历史" /> : loading ? <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div> : (
-        <>
-          {stats && (
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-              <Col xs={24} sm={12} lg={6}><Card><Statistic title="平均买入价格" value={priceDisplay(stats.averagePurchasePrice)} /></Card></Col>
-              <Col xs={24} sm={12} lg={6}><Card><Statistic title="平均售出价格" value={priceDisplay(stats.averageSellingPrice)} /></Card></Col>
-              <Col xs={24} sm={12} lg={6}><Card><Statistic title="最近买入价格" value={priceDisplay(stats.latestPurchasePrice)} /></Card></Col>
-              <Col xs={24} sm={12} lg={6}><Card><Statistic title="最近售出价格" value={priceDisplay(stats.latestSellingPrice)} /></Card></Col>
-            </Row>
-          )}
-          <Typography.Title level={5}>买入价格历史</Typography.Title>
-          <Table columns={purchaseColumns} dataSource={purchaseHistory} rowKey="inboundRecordId" pagination={false} locale={{ emptyText: '暂无买入记录' }} style={{ marginBottom: 24 }} />
-          <Typography.Title level={5}>售出价格历史</Typography.Title>
-          <Table columns={sellingColumns} dataSource={sellingHistory} rowKey="outboundRecordId" pagination={false} locale={{ emptyText: '暂无售出记录' }} />
-        </>
-      )}
+    <div style={{ padding: '8px 0' }}>
+      <Typography.Text strong>买入记录</Typography.Text>
+      <Table
+        columns={purchaseColumns}
+        dataSource={purchaseHistory}
+        rowKey="inboundRecordId"
+        pagination={false}
+        size="small"
+        locale={{ emptyText: '暂无买入记录' }}
+        style={{ marginBottom: 16, marginTop: 8 }}
+      />
+      <Typography.Text strong>售出记录</Typography.Text>
+      <Table
+        columns={sellingColumns}
+        dataSource={sellingHistory}
+        rowKey="outboundRecordId"
+        pagination={false}
+        size="small"
+        locale={{ emptyText: '暂无售出记录' }}
+        style={{ marginTop: 8 }}
+      />
     </div>
   );
 };
