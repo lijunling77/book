@@ -1,6 +1,5 @@
 /**
  * 书籍管理 IPC 处理器
- * 注册书籍相关的 IPC 通道，调用 BookService 处理业务逻辑
  */
 
 import { ipcMain } from 'electron';

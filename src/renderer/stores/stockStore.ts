@@ -68,19 +68,8 @@ export const useStockStore = create<StockState>((set, get) => ({
     }
   },
 
-  setViewMode: (mode: 'detail' | 'summary') => {
-    set({ viewMode: mode });
-  },
-
-  setFilter: (filterUpdate: Partial<StockFilter>) => {
-    set((state) => ({ filter: { ...state.filter, ...filterUpdate } }));
-  },
-
-  setPage: (page: number, pageSize: number) => {
-    set({ page, pageSize });
-  },
-
-  reset: () => {
-    set({ filter: {}, page: DEFAULT_PAGE, pageSize: DEFAULT_PAGE_SIZE, viewMode: 'detail' });
-  },
+  setViewMode: (mode: 'detail' | 'summary') => set({ viewMode: mode }),
+  setFilter: (filterUpdate: Partial<StockFilter>) => set((state) => ({ filter: { ...state.filter, ...filterUpdate } })),
+  setPage: (page: number, pageSize: number) => set({ page, pageSize }),
+  reset: () => set({ filter: {}, page: DEFAULT_PAGE, pageSize: DEFAULT_PAGE_SIZE, viewMode: 'detail' }),
 }));

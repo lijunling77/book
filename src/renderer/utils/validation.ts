@@ -32,12 +32,6 @@ export const nonNegativeNumberRule: Rule = {
   transform: (value) => (value ? Number(value) : value),
 };
 
-/** ISBN 格式校验（10位或13位数字，可含连字符） */
-export const isbnRule: Rule = {
-  pattern: /^[\d-]{10,17}$/,
-  message: '请输入有效的 ISBN（10位或13位数字）',
-};
-
 /** 数量校验规则集 */
 export const quantityRules: Rule[] = [
   { required: true, message: '请输入数量' },
@@ -48,9 +42,4 @@ export const quantityRules: Rule[] = [
 export const priceRules: Rule[] = [
   { required: true, message: '请输入价格' },
   { type: 'number', min: 0, message: '价格不能为负数' },
-];
-
-/** 预警阈值校验规则集 */
-export const alertThresholdRules: Rule[] = [
-  { type: 'number', min: 0, message: '预警阈值不能为负数' },
 ];

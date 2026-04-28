@@ -11,8 +11,8 @@ import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import { eq, desc } from 'drizzle-orm';
 import { getDatabase, getSqliteDatabase, closeDatabase, initializeDatabase } from '../db';
-import { backupInfo, operationLogs } from '../db/schema';
-import { ERROR_MESSAGES, OPERATION_TYPES, ENTITY_TYPES } from '../../shared/constants';
+import { backupInfo } from '../db/schema';
+import { ERROR_MESSAGES } from '../../shared/constants';
 import type { BackupInfo } from '../../shared/types';
 
 export class BackupService {
@@ -69,23 +69,11 @@ export class BackupService {
       })
       .run();
 
-    // 记录操作日志
     const record = db
       .select()
       .from(backupInfo)
       .where(eq(backupInfo.id, id))
       .get()!;
-
-    db.insert(operationLogs)
-      .values({
-        id: uuidv4(),
-        operationType: OPERATION_TYPES.CREATE,
-        entityType: ENTITY_TYPES.BACKUP,
-        entityId: id,
-        beforeData: null,
-        afterData: JSON.stringify(record),
-      })
-      .run();
 
     return record as BackupInfo;
   }

@@ -14,27 +14,10 @@ export const books = sqliteTable('books', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   author: text('author'),
-  isbn: text('isbn').unique(),
-  category: text('category'),
   description: text('description'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
 });
-
-// ============================================================
-// 版本表
-// ============================================================
-
-export const editions = sqliteTable('editions', {
-  id: text('id').primaryKey(),
-  bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  alertThreshold: integer('alert_threshold'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
-  updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
-}, (table) => ({
-  bookIdNameUnique: uniqueIndex('editions_book_id_name_unique').on(table.bookId, table.name),
-}));
 
 // ============================================================
 // 位置表
@@ -58,12 +41,11 @@ export const locations = sqliteTable('locations', {
 export const stock = sqliteTable('stock', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   quantity: integer('quantity').notNull().default(0),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
 }, (table) => ({
-  bookEditionLocationUnique: uniqueIndex('stock_book_edition_location_unique').on(table.bookId, table.editionId, table.locationId),
+  bookLocationUnique: uniqueIndex('stock_book_location_unique').on(table.bookId, table.locationId),
 }));
 
 // ============================================================
@@ -73,7 +55,6 @@ export const stock = sqliteTable('stock', {
 export const inboundRecords = sqliteTable('inbound_records', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   inboundDate: text('inbound_date').notNull(),
   quantity: integer('quantity').notNull(),
@@ -90,7 +71,6 @@ export const inboundRecords = sqliteTable('inbound_records', {
 export const outboundRecords = sqliteTable('outbound_records', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   outboundDate: text('outbound_date').notNull(),
   quantity: integer('quantity').notNull(),
@@ -98,44 +78,6 @@ export const outboundRecords = sqliteTable('outbound_records', {
   buyer: text('buyer'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
-});
-
-// ============================================================
-// 操作日志表
-// ============================================================
-
-export const operationLogs = sqliteTable('operation_logs', {
-  id: text('id').primaryKey(),
-  operationType: text('operation_type').notNull(),
-  entityType: text('entity_type').notNull(),
-  entityId: text('entity_id').notNull(),
-  beforeData: text('before_data'),
-  afterData: text('after_data'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
-});
-
-// ============================================================
-// 书籍图片表
-// ============================================================
-
-export const bookImages = sqliteTable('book_images', {
-  id: text('id').primaryKey(),
-  bookId: text('book_id').notNull().unique().references(() => books.id, { onDelete: 'cascade' }),
-  filePath: text('file_path').notNull(),
-  thumbnailPath: text('thumbnail_path').notNull(),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
-});
-
-// ============================================================
-// 版本图片表
-// ============================================================
-
-export const editionImages = sqliteTable('edition_images', {
-  id: text('id').primaryKey(),
-  editionId: text('edition_id').notNull().unique().references(() => editions.id, { onDelete: 'cascade' }),
-  filePath: text('file_path').notNull(),
-  thumbnailPath: text('thumbnail_path').notNull(),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
 });
 
 // ============================================================
@@ -159,7 +101,6 @@ export const stocktakingItems = sqliteTable('stocktaking_items', {
   id: text('id').primaryKey(),
   taskId: text('task_id').notNull().references(() => stocktakingTasks.id, { onDelete: 'cascade' }),
   bookId: text('book_id').notNull().references(() => books.id),
-  editionId: text('edition_id').references(() => editions.id),
   locationId: text('location_id').notNull().references(() => locations.id),
   systemQuantity: integer('system_quantity').notNull(),
   actualQuantity: integer('actual_quantity'),

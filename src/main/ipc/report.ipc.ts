@@ -1,8 +1,3 @@
-/**
- * 综合报表 IPC 处理器
- * 注册综合报表数据获取的 IPC 通道，调用 ReportService 处理业务逻辑
- */
-
 import { ipcMain } from 'electron';
 import { REPORT_CHANNELS } from '../../shared/ipc-channels';
 import { ReportService } from '../services/report.service';

@@ -11,13 +11,11 @@ interface DashboardState {
 
 const initialData: DashboardData = {
   totalStockQuantity: 0,
-  alertStockUnitCount: 0,
   todayInboundQuantity: 0,
   todayInboundAmount: 0,
   todayOutboundQuantity: 0,
   todayOutboundAmount: 0,
   monthlyProfit: 0,
-  alertStockUnits: [],
 };
 
 export const useDashboardStore = create<DashboardState>((set) => ({

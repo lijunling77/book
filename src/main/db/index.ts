@@ -14,28 +14,15 @@ let sqliteDb: Database.Database | null = null;
 
 /**
  * 创建所有数据表的 SQL 语句
- * 包含唯一性约束和业务约束（CHECK）
  */
 const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS books (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     author TEXT,
-    isbn TEXT UNIQUE,
-    category TEXT,
     description TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
-  );
-
-  CREATE TABLE IF NOT EXISTS editions (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    alert_threshold INTEGER,
-    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    UNIQUE(book_id, name)
   );
 
   CREATE TABLE IF NOT EXISTS locations (
@@ -51,17 +38,15 @@ const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS stock (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     quantity INTEGER NOT NULL DEFAULT 0 CHECK(quantity >= 0),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    UNIQUE(book_id, edition_id, location_id)
+    UNIQUE(book_id, location_id)
   );
 
   CREATE TABLE IF NOT EXISTS inbound_records (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     inbound_date TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK(quantity > 0),
@@ -74,7 +59,6 @@ const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS outbound_records (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     outbound_date TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK(quantity > 0),
@@ -82,32 +66,6 @@ const CREATE_TABLES_SQL = `
     buyer TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
-  );
-
-  CREATE TABLE IF NOT EXISTS operation_logs (
-    id TEXT PRIMARY KEY,
-    operation_type TEXT NOT NULL,
-    entity_type TEXT NOT NULL,
-    entity_id TEXT NOT NULL,
-    before_data TEXT,
-    after_data TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
-  );
-
-  CREATE TABLE IF NOT EXISTS book_images (
-    id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL UNIQUE REFERENCES books(id) ON DELETE CASCADE,
-    file_path TEXT NOT NULL,
-    thumbnail_path TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
-  );
-
-  CREATE TABLE IF NOT EXISTS edition_images (
-    id TEXT PRIMARY KEY,
-    edition_id TEXT NOT NULL UNIQUE REFERENCES editions(id) ON DELETE CASCADE,
-    file_path TEXT NOT NULL,
-    thumbnail_path TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );
 
   CREATE TABLE IF NOT EXISTS stocktaking_tasks (
@@ -123,7 +81,6 @@ const CREATE_TABLES_SQL = `
     id TEXT PRIMARY KEY,
     task_id TEXT NOT NULL REFERENCES stocktaking_tasks(id) ON DELETE CASCADE,
     book_id TEXT NOT NULL REFERENCES books(id),
-    edition_id TEXT REFERENCES editions(id),
     location_id TEXT NOT NULL REFERENCES locations(id),
     system_quantity INTEGER NOT NULL,
     actual_quantity INTEGER,

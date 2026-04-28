@@ -17,16 +17,6 @@ export const BOOK_CHANNELS = {
 } as const;
 
 // ============================================================
-// 版本管理
-// ============================================================
-
-export const EDITION_CHANNELS = {
-  CREATE: 'edition:create',
-  UPDATE: 'edition:update',
-  DELETE: 'edition:delete',
-} as const;
-
-// ============================================================
 // 位置管理
 // ============================================================
 
@@ -63,14 +53,12 @@ export const OUTBOUND_CHANNELS = {
 } as const;
 
 // ============================================================
-// 库存与预警
+// 库存
 // ============================================================
 
 export const STOCK_CHANNELS = {
   LIST: 'stock:list',
   SUMMARY: 'stock:summary',
-  SET_ALERT: 'stock:setAlert',
-  ALERT_LIST: 'stock:alertList',
 } as const;
 
 // ============================================================
@@ -88,9 +76,7 @@ export const PRICE_CHANNELS = {
 // ============================================================
 
 export const PROFIT_CHANNELS = {
-  BY_STOCK_UNIT: 'profit:byStockUnit',
   BY_BOOK: 'profit:byBook',
-  BY_CATEGORY: 'profit:byCategory',
 } as const;
 
 // ============================================================
@@ -145,25 +131,6 @@ export const IMPORT_CHANNELS = {
 } as const;
 
 // ============================================================
-// 操作日志
-// ============================================================
-
-export const LOG_CHANNELS = {
-  LIST: 'log:list',
-} as const;
-
-// ============================================================
-// 图片管理
-// ============================================================
-
-export const IMAGE_CHANNELS = {
-  UPLOAD: 'image:upload',
-  DELETE: 'image:delete',
-  GET: 'image:get',
-  THUMBNAIL: 'image:thumbnail',
-} as const;
-
-// ============================================================
 // 综合报表
 // ============================================================
 
@@ -177,7 +144,6 @@ export const REPORT_CHANNELS = {
 
 export const ALL_CHANNELS = {
   ...BOOK_CHANNELS,
-  ...EDITION_CHANNELS,
   ...LOCATION_CHANNELS,
   ...INBOUND_CHANNELS,
   ...OUTBOUND_CHANNELS,
@@ -189,7 +155,5 @@ export const ALL_CHANNELS = {
   ...BACKUP_CHANNELS,
   ...EXPORT_CHANNELS,
   ...IMPORT_CHANNELS,
-  ...LOG_CHANNELS,
-  ...IMAGE_CHANNELS,
   ...REPORT_CHANNELS,
 } as const;

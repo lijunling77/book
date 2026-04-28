@@ -89,7 +89,6 @@ const LocationList: React.FC = () => {
 
   const stockColumns: ColumnsType<StockUnitAtLocation> = [
     { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle' },
-    { title: '版本', dataIndex: 'editionName', key: 'editionName' },
     { title: '库存数量', dataIndex: 'quantity', key: 'quantity' },
   ];
 
@@ -130,7 +129,7 @@ const LocationList: React.FC = () => {
         <Table
           columns={stockColumns}
           dataSource={locationStock}
-          rowKey={(r) => `${r.bookId}-${r.editionId}`}
+          rowKey={(r) => `${r.bookId}`}
           loading={locationStockLoading}
           pagination={false}
           locale={{ emptyText: '该位置暂无库存' }}
