@@ -3,7 +3,6 @@
  */
 
 import { registerBookIpcHandlers } from './book.ipc';
-import { registerLocationIpcHandlers } from './location.ipc';
 import { registerInboundIpcHandlers } from './inbound.ipc';
 import { registerOutboundIpcHandlers } from './outbound.ipc';
 import { registerStockIpcHandlers } from './stock.ipc';
@@ -18,7 +17,6 @@ import { registerReportIpcHandlers } from './report.ipc';
 
 export function registerAllIpcHandlers(): void {
   registerBookIpcHandlers();
-  registerLocationIpcHandlers();
   registerInboundIpcHandlers();
   registerOutboundIpcHandlers();
   registerStockIpcHandlers();

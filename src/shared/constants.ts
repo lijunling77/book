@@ -48,7 +48,7 @@ export const STOCKTAKING_ITEM_STATUS_LABELS: Record<string, string> = {
 
 /** 盘点范围类型常量 */
 export const STOCKTAKING_SCOPE_TYPES = {
-  LOCATION: 'location',
+  ALL: 'all',
 } as const;
 
 // ============================================================

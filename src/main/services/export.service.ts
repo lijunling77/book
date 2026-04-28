@@ -10,7 +10,6 @@ import {
   outboundRecords,
   stock,
   books,
-  locations,
 } from '../db/schema';
 import { ERROR_MESSAGES } from '../../shared/constants';
 import type {
@@ -44,7 +43,6 @@ export class ExportService {
     const conditions: ReturnType<typeof eq>[] = [];
 
     if (filter?.bookId) conditions.push(eq(inboundRecords.bookId, filter.bookId));
-    if (filter?.locationId) conditions.push(eq(inboundRecords.locationId, filter.locationId));
     if (filter?.dateRange?.startDate) conditions.push(gte(inboundRecords.inboundDate, filter.dateRange.startDate));
     if (filter?.dateRange?.endDate) conditions.push(lte(inboundRecords.inboundDate, filter.dateRange.endDate));
     if (filter?.supplier) conditions.push(like(inboundRecords.supplier, `%${filter.supplier}%`));
@@ -55,9 +53,7 @@ export class ExportService {
       .select({
         书名: books.title,
         作者: books.author,
-        仓库: locations.warehouse,
-        书架: locations.shelf,
-        层号: locations.layer,
+        存放位置: books.location,
         入库日期: inboundRecords.inboundDate,
         数量: inboundRecords.quantity,
         买入价格: inboundRecords.purchasePrice,
@@ -65,8 +61,7 @@ export class ExportService {
         创建时间: inboundRecords.createdAt,
       })
       .from(inboundRecords)
-      .innerJoin(books, eq(inboundRecords.bookId, books.id))
-      .innerJoin(locations, eq(inboundRecords.locationId, locations.id));
+      .innerJoin(books, eq(inboundRecords.bookId, books.id));
 
     if (whereClause) query.where(whereClause);
 
@@ -80,7 +75,6 @@ export class ExportService {
     const conditions: ReturnType<typeof eq>[] = [];
 
     if (filter?.bookId) conditions.push(eq(outboundRecords.bookId, filter.bookId));
-    if (filter?.locationId) conditions.push(eq(outboundRecords.locationId, filter.locationId));
     if (filter?.dateRange?.startDate) conditions.push(gte(outboundRecords.outboundDate, filter.dateRange.startDate));
     if (filter?.dateRange?.endDate) conditions.push(lte(outboundRecords.outboundDate, filter.dateRange.endDate));
     if (filter?.buyer) conditions.push(like(outboundRecords.buyer, `%${filter.buyer}%`));
@@ -91,9 +85,7 @@ export class ExportService {
       .select({
         书名: books.title,
         作者: books.author,
-        仓库: locations.warehouse,
-        书架: locations.shelf,
-        层号: locations.layer,
+        存放位置: books.location,
         出库日期: outboundRecords.outboundDate,
         数量: outboundRecords.quantity,
         售出价格: outboundRecords.sellingPrice,
@@ -101,8 +93,7 @@ export class ExportService {
         创建时间: outboundRecords.createdAt,
       })
       .from(outboundRecords)
-      .innerJoin(books, eq(outboundRecords.bookId, books.id))
-      .innerJoin(locations, eq(outboundRecords.locationId, locations.id));
+      .innerJoin(books, eq(outboundRecords.bookId, books.id));
 
     if (whereClause) query.where(whereClause);
 
@@ -116,22 +107,18 @@ export class ExportService {
     const conditions: ReturnType<typeof eq>[] = [];
 
     if (filter?.bookTitle) conditions.push(like(books.title, `%${filter.bookTitle}%`));
-    if (filter?.locationId) conditions.push(eq(stock.locationId, filter.locationId));
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length > 0 ? conditions[0] : undefined;
 
     const query = db
       .select({
         书名: books.title,
         作者: books.author,
-        仓库: locations.warehouse,
-        书架: locations.shelf,
-        层号: locations.layer,
+        存放位置: books.location,
         库存数量: stock.quantity,
       })
       .from(stock)
-      .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(locations, eq(stock.locationId, locations.id));
+      .innerJoin(books, eq(stock.bookId, books.id));
 
     if (whereClause) query.where(whereClause);
 

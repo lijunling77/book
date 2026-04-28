@@ -1,6 +1,6 @@
 /**
  * StocktakingService - 库存盘点服务
- * 支持按位置选择盘点范围
+ * 盘点所有库存
  */
 
 import { eq, and } from 'drizzle-orm';
@@ -11,7 +11,6 @@ import {
   stocktakingItems,
   stock,
   books,
-  locations,
   inboundRecords,
   outboundRecords,
 } from '../db/schema';
@@ -33,19 +32,18 @@ import type {
 const stockService = new StockService();
 
 export class StocktakingService {
-  create(input: CreateStocktakingInput): StocktakingTask {
+  create(_input: CreateStocktakingInput): StocktakingTask {
     const db = getDatabase();
     const sqliteDb = getSqliteDatabase();
 
     const transaction = sqliteDb.transaction(() => {
+      // Load all stock records
       const stockRecords = db
         .select({
           bookId: stock.bookId,
-          locationId: stock.locationId,
           quantity: stock.quantity,
         })
         .from(stock)
-        .where(eq(stock.locationId, input.scopeValue))
         .all();
 
       if (stockRecords.length === 0) {
@@ -58,8 +56,8 @@ export class StocktakingService {
       db.insert(stocktakingTasks)
         .values({
           id: taskId,
-          scopeType: input.scopeType,
-          scopeValue: input.scopeValue,
+          scopeType: 'all',
+          scopeValue: 'all',
           status: STOCKTAKING_STATUS.IN_PROGRESS,
           createdAt: now,
           completedAt: null,
@@ -72,7 +70,6 @@ export class StocktakingService {
             id: uuidv4(),
             taskId,
             bookId: record.bookId,
-            locationId: record.locationId,
             systemQuantity: record.quantity,
             actualQuantity: null,
             variance: null,
@@ -135,19 +132,14 @@ export class StocktakingService {
         id: stocktakingItems.id,
         taskId: stocktakingItems.taskId,
         bookId: stocktakingItems.bookId,
-        locationId: stocktakingItems.locationId,
         systemQuantity: stocktakingItems.systemQuantity,
         actualQuantity: stocktakingItems.actualQuantity,
         variance: stocktakingItems.variance,
         status: stocktakingItems.status,
         bookTitle: books.title,
-        warehouse: locations.warehouse,
-        shelf: locations.shelf,
-        layer: locations.layer,
       })
       .from(stocktakingItems)
       .innerJoin(books, eq(stocktakingItems.bookId, books.id))
-      .innerJoin(locations, eq(stocktakingItems.locationId, locations.id))
       .where(eq(stocktakingItems.taskId, taskId))
       .all();
 
@@ -155,15 +147,11 @@ export class StocktakingService {
       id: item.id,
       taskId: item.taskId,
       bookId: item.bookId,
-      locationId: item.locationId,
       systemQuantity: item.systemQuantity,
       actualQuantity: item.actualQuantity,
       variance: item.variance,
       status: item.status as StocktakingItemView['status'],
       bookTitle: item.bookTitle,
-      warehouse: item.warehouse,
-      shelf: item.shelf,
-      layer: item.layer,
     }));
 
     let surplusCount = 0;
@@ -204,14 +192,13 @@ export class StocktakingService {
         if (item.actualQuantity === null) continue;
         if (item.variance !== null && item.variance !== 0) {
           // 调整库存
-          stockService.adjustStock(item.bookId, item.locationId, item.variance);
+          stockService.adjustStock(item.bookId, item.variance);
 
           if (item.variance > 0) {
             // 盘盈：生成入库记录（价格为0，供应商标记为盘点调整）
             db.insert(inboundRecords).values({
               id: uuidv4(),
               bookId: item.bookId,
-              locationId: item.locationId,
               inboundDate: today,
               quantity: item.variance,
               purchasePrice: 0,
@@ -224,7 +211,6 @@ export class StocktakingService {
             db.insert(outboundRecords).values({
               id: uuidv4(),
               bookId: item.bookId,
-              locationId: item.locationId,
               outboundDate: today,
               quantity: Math.abs(item.variance),
               sellingPrice: 0,
@@ -266,19 +252,14 @@ export class StocktakingService {
         id: stocktakingItems.id,
         taskId: stocktakingItems.taskId,
         bookId: stocktakingItems.bookId,
-        locationId: stocktakingItems.locationId,
         systemQuantity: stocktakingItems.systemQuantity,
         actualQuantity: stocktakingItems.actualQuantity,
         variance: stocktakingItems.variance,
         status: stocktakingItems.status,
         bookTitle: books.title,
-        warehouse: locations.warehouse,
-        shelf: locations.shelf,
-        layer: locations.layer,
       })
       .from(stocktakingItems)
       .innerJoin(books, eq(stocktakingItems.bookId, books.id))
-      .innerJoin(locations, eq(stocktakingItems.locationId, locations.id))
       .where(eq(stocktakingItems.taskId, taskId))
       .all();
 
@@ -286,15 +267,11 @@ export class StocktakingService {
       id: item.id,
       taskId: item.taskId,
       bookId: item.bookId,
-      locationId: item.locationId,
       systemQuantity: item.systemQuantity,
       actualQuantity: item.actualQuantity,
       variance: item.variance,
       status: item.status as StocktakingItemView['status'],
       bookTitle: item.bookTitle,
-      warehouse: item.warehouse,
-      shelf: item.shelf,
-      layer: item.layer,
     }));
 
     return { task: task as StocktakingTask, items: itemViews };

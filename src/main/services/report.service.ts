@@ -8,7 +8,6 @@ import { getDatabase } from '../db';
 import {
   stock,
   books,
-  locations,
   inboundRecords,
   outboundRecords,
 } from '../db/schema';
@@ -17,7 +16,7 @@ import type { DateRange } from '../../shared/types';
 export interface ReportRow {
   bookTitle: string;
   author: string | null;
-  locations: string;
+  location: string | null;
   totalQuantity: number;
   inboundTotalQuantity: number;
   inboundTotalAmount: number;
@@ -43,13 +42,11 @@ export class ReportService {
         bookId: books.id,
         bookTitle: books.title,
         author: books.author,
-        totalQuantity: sql<number>`COALESCE(SUM(${stock.quantity}), 0)`,
-        locations: sql<string>`GROUP_CONCAT(DISTINCT ${locations.warehouse} || '-' || ${locations.shelf} || '-' || ${locations.layer})`,
+        location: books.location,
+        totalQuantity: sql<number>`COALESCE(${stock.quantity}, 0)`,
       })
       .from(books)
       .leftJoin(stock, sql`${stock.bookId} = ${books.id}`)
-      .leftJoin(locations, sql`${stock.locationId} = ${locations.id}`)
-      .groupBy(books.id)
       .all();
 
     return combos.map((combo) => {
@@ -61,7 +58,7 @@ export class ReportService {
       return {
         bookTitle: combo.bookTitle,
         author: combo.author,
-        locations: combo.locations ?? '-',
+        location: combo.location,
         totalQuantity: combo.totalQuantity,
         inboundTotalQuantity: inboundStats.totalQuantity,
         inboundTotalAmount: inboundStats.totalAmount,

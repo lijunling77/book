@@ -12,7 +12,7 @@ const { Title } = Typography;
 interface ReportRow {
   bookTitle: string;
   author: string | null;
-  locations: string;
+  location: string | null;
   totalQuantity: number;
   inboundTotalQuantity: number;
   inboundTotalAmount: number;
@@ -70,7 +70,7 @@ const Report: React.FC = () => {
 
   const filteredData = data.filter((row) => {
     if (filterTitle && !row.bookTitle.includes(filterTitle)) return false;
-    if (filterLocation && !(row.locations || '').includes(filterLocation)) return false;
+    if (filterLocation && !(row.location || '').includes(filterLocation)) return false;
     return true;
   });
 
@@ -88,7 +88,7 @@ const Report: React.FC = () => {
   const columns: ColumnsType<ReportRow> = [
     { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', width: 160, ellipsis: true, fixed: 'left' },
     { title: '作者', dataIndex: 'author', key: 'author', width: 100, ellipsis: true, render: (v: string | null) => v ?? '-' },
-    { title: '位置', dataIndex: 'locations', key: 'locations', width: 180, ellipsis: true },
+    { title: '位置', dataIndex: 'location', key: 'location', width: 120, ellipsis: true, render: (v: string | null) => v ?? '-' },
     { title: '库存数量', dataIndex: 'totalQuantity', key: 'totalQuantity', width: 100, sorter: (a, b) => a.totalQuantity - b.totalQuantity, render: (val: number) => <span style={{ fontWeight: 'bold' }}>{val}</span> },
     { title: '入库总量', dataIndex: 'inboundTotalQuantity', key: 'inboundTotalQuantity', width: 100, sorter: (a, b) => a.inboundTotalQuantity - b.inboundTotalQuantity },
     { title: '入库总金额', dataIndex: 'inboundTotalAmount', key: 'inboundTotalAmount', width: 120, sorter: (a, b) => a.inboundTotalAmount - b.inboundTotalAmount, render: formatAmount },

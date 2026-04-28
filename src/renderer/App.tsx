@@ -5,7 +5,6 @@ import zhCN from 'antd/locale/zh_CN';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import BookList from './pages/BookList';
-import LocationList from './pages/LocationList';
 import InboundList from './pages/InboundList';
 import OutboundList from './pages/OutboundList';
 import StockList from './pages/StockList';
@@ -83,7 +82,6 @@ const App: React.FC = () => {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="books" element={<BookList />} />
-            <Route path="locations" element={<LocationList />} />
             <Route path="inbound" element={<InboundList />} />
             <Route path="outbound" element={<OutboundList />} />
             <Route path="stock" element={<StockList />} />

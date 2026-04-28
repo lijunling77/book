@@ -34,7 +34,6 @@ const StocktakingDetail: React.FC = () => {
 
   const columns: ColumnsType<StocktakingItemView> = [
     { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle' },
-    { title: '位置', key: 'location', render: (_: unknown, r: StocktakingItemView) => `${r.warehouse}-${r.shelf}-${r.layer}` },
     { title: '系统数量', dataIndex: 'systemQuantity', key: 'systemQuantity' },
     { title: '实际数量', key: 'actualQuantity', render: (_: unknown, record: StocktakingItemView) => isCompleted ? <span>{record.actualQuantity ?? '-'}</span> : <InputNumber min={0} precision={0} value={actualValues[record.id]} onChange={(val) => setActualValues((prev) => ({ ...prev, [record.id]: val }))} placeholder="输入实际数量" style={{ width: 120 }} /> },
     { title: '差异', dataIndex: 'variance', key: 'variance', render: (val: number | null) => val !== null && val !== undefined ? <span style={{ color: val > 0 ? '#3f8600' : val < 0 ? '#cf1322' : undefined, fontWeight: 'bold' }}>{val > 0 ? `+${val}` : val}</span> : '-' },
@@ -49,7 +48,7 @@ const StocktakingDetail: React.FC = () => {
       <Space style={{ marginBottom: 16 }}><Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/stocktaking')}>返回列表</Button></Space>
       <Typography.Title level={4}>盘点详情</Typography.Title>
       <Descriptions bordered size="small" style={{ marginBottom: 16 }}>
-        <Descriptions.Item label="范围类型">按位置</Descriptions.Item>
+        <Descriptions.Item label="范围">所有库存</Descriptions.Item>
         <Descriptions.Item label="状态"><Tag color={isCompleted ? 'green' : 'blue'}>{STOCKTAKING_STATUS_LABELS[detail.task.status] ?? detail.task.status}</Tag></Descriptions.Item>
         <Descriptions.Item label="创建时间">{formatDateTime(detail.task.createdAt)}</Descriptions.Item>
         {detail.task.completedAt && <Descriptions.Item label="完成时间">{formatDateTime(detail.task.completedAt)}</Descriptions.Item>}

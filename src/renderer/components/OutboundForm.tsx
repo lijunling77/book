@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, InputNumber, DatePicker, Select, message } from 'antd';
 import dayjs from 'dayjs';
-import type { Book, OutboundRecord, CreateOutboundInput, UpdateOutboundInput, StockView } from '../../shared/types';
-import { bookApi, outboundApi, stockApi } from '../utils/ipc';
+import type { Book, OutboundRecord, CreateOutboundInput, UpdateOutboundInput } from '../../shared/types';
+import { bookApi, outboundApi } from '../utils/ipc';
 
 interface OutboundFormProps {
   open: boolean;
@@ -11,18 +11,10 @@ interface OutboundFormProps {
   onSuccess: () => void;
 }
 
-interface LocationWithStock {
-  locationId: string;
-  label: string;
-  quantity: number;
-}
-
 const OutboundForm: React.FC<OutboundFormProps> = ({ open, record, onClose, onSuccess }) => {
   const [form] = Form.useForm();
   const isEdit = !!record;
   const [books, setBooks] = useState<Book[]>([]);
-  const [availableLocations, setAvailableLocations] = useState<LocationWithStock[]>([]);
-  const [selectedBookId, setSelectedBookId] = useState<string | undefined>();
 
   useEffect(() => {
     if (open) {
@@ -30,18 +22,13 @@ const OutboundForm: React.FC<OutboundFormProps> = ({ open, record, onClose, onSu
       if (record) {
         form.setFieldsValue({
           bookId: record.bookId,
-          locationId: record.locationId,
           outboundDate: record.outboundDate ? dayjs(record.outboundDate) : undefined,
           quantity: record.quantity,
           sellingPrice: record.sellingPrice,
           buyer: record.buyer ?? '',
         });
-        setSelectedBookId(record.bookId);
-        loadStockLocations(record.bookId);
       } else {
         form.resetFields();
-        setSelectedBookId(undefined);
-        setAvailableLocations([]);
       }
     }
   }, [open, record, form]);
@@ -53,38 +40,12 @@ const OutboundForm: React.FC<OutboundFormProps> = ({ open, record, onClose, onSu
     } catch {}
   };
 
-  const loadStockLocations = async (bookId: string) => {
-    try {
-      // 查询该书籍的所有库存记录，提取有库存的位置
-      const result = await stockApi.list({ page: 1, pageSize: 1000 });
-      const bookStock = result.data.filter(
-        (s: StockView) => s.bookId === bookId && s.quantity > 0,
-      );
-      setAvailableLocations(
-        bookStock.map((s: StockView) => ({
-          locationId: s.locationId,
-          label: `${s.warehouse} - ${s.shelf} - ${s.layer}（库存：${s.quantity}）`,
-          quantity: s.quantity,
-        })),
-      );
-    } catch {
-      setAvailableLocations([]);
-    }
-  };
-
-  const handleBookChange = (bookId: string) => {
-    setSelectedBookId(bookId);
-    form.setFieldValue('locationId', undefined);
-    loadStockLocations(bookId);
-  };
-
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
       const dateStr = values.outboundDate ? values.outboundDate.format('YYYY-MM-DD') : '';
       if (isEdit && record) {
         const updateData: UpdateOutboundInput = {
-          locationId: values.locationId,
           outboundDate: dateStr,
           quantity: values.quantity,
           sellingPrice: values.sellingPrice,
@@ -95,7 +56,6 @@ const OutboundForm: React.FC<OutboundFormProps> = ({ open, record, onClose, onSu
       } else {
         const createData: CreateOutboundInput = {
           bookId: values.bookId,
-          locationId: values.locationId,
           outboundDate: dateStr,
           quantity: values.quantity,
           sellingPrice: values.sellingPrice,
@@ -133,24 +93,7 @@ const OutboundForm: React.FC<OutboundFormProps> = ({ open, record, onClose, onSu
             showSearch
             optionFilterProp="label"
             disabled={isEdit}
-            onChange={handleBookChange}
             options={books.map((b) => ({ value: b.id, label: b.title }))}
-          />
-        </Form.Item>
-        <Form.Item
-          name="locationId"
-          label="来源位置"
-          rules={[{ required: true, message: '请选择位置' }]}
-        >
-          <Select
-            placeholder={selectedBookId ? (availableLocations.length > 0 ? '请选择有库存的位置' : '该书籍暂无库存') : '请先选择书籍'}
-            showSearch
-            optionFilterProp="label"
-            disabled={!selectedBookId || availableLocations.length === 0}
-            options={availableLocations.map((l) => ({
-              value: l.locationId,
-              label: l.label,
-            }))}
           />
         </Form.Item>
         <Form.Item

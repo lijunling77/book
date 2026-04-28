@@ -9,7 +9,6 @@ import { getDatabase, getSqliteDatabase } from '../db';
 import {
   inboundRecords,
   books,
-  locations,
 } from '../db/schema';
 import {
   ERROR_MESSAGES,
@@ -43,22 +42,12 @@ export class InboundService {
         throw new Error(ERROR_MESSAGES.BOOK_NOT_FOUND);
       }
 
-      const location = db
-        .select()
-        .from(locations)
-        .where(eq(locations.id, input.locationId))
-        .get();
-      if (!location) {
-        throw new Error(ERROR_MESSAGES.LOCATION_NOT_FOUND);
-      }
-
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
       const id = uuidv4();
 
       const newRecord: typeof inboundRecords.$inferInsert = {
         id,
         bookId: input.bookId,
-        locationId: input.locationId,
         inboundDate: input.inboundDate,
         quantity: input.quantity,
         purchasePrice: input.purchasePrice,
@@ -69,11 +58,7 @@ export class InboundService {
 
       db.insert(inboundRecords).values(newRecord).run();
 
-      stockService.adjustStock(
-        input.bookId,
-        input.locationId,
-        input.quantity,
-      );
+      stockService.adjustStock(input.bookId, input.quantity);
 
       const created = db
         .select()
@@ -106,44 +91,19 @@ export class InboundService {
 
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-      const newLocationId = input.locationId ?? existing.locationId;
       const newQuantity = input.quantity ?? existing.quantity;
-
-      const locationChanged = input.locationId !== undefined && input.locationId !== existing.locationId;
       const quantityChanged = input.quantity !== undefined && input.quantity !== existing.quantity;
 
-      if (locationChanged) {
-        const location = db.select().from(locations).where(eq(locations.id, newLocationId)).get();
-        if (!location) {
-          throw new Error(ERROR_MESSAGES.LOCATION_NOT_FOUND);
+      if (quantityChanged) {
+        const delta = newQuantity - existing.quantity;
+        const currentQty = stockService.getStockQuantity(existing.bookId);
+        if (currentQty + delta < 0) {
+          throw new Error(`操作将导致库存数量为负（当前${currentQty}，调整${delta}）`);
         }
-      }
-
-      if (locationChanged || quantityChanged) {
-        const oldQty = stockService.getStockQuantity(existing.bookId, existing.locationId);
-
-        if (locationChanged) {
-          // 位置变了：原位置减原数量，新位置加新数量
-          const oldAfter = oldQty - existing.quantity;
-          if (oldAfter < 0) {
-            throw new Error(`原位置库存不足（当前${oldQty}，需回退${existing.quantity}），请先调整出库记录`);
-          }
-          // 原位置减
-          stockService.adjustStock(existing.bookId, existing.locationId, -existing.quantity);
-          // 新位置加
-          stockService.adjustStock(existing.bookId, newLocationId, newQuantity);
-        } else {
-          // 只改数量：检查调整后不为负
-          const delta = newQuantity - existing.quantity;
-          if (oldQty + delta < 0) {
-            throw new Error(`操作将导致库存数量为负（当前${oldQty}，调整${delta}）`);
-          }
-          stockService.adjustStock(existing.bookId, existing.locationId, delta);
-        }
+        stockService.adjustStock(existing.bookId, delta);
       }
 
       const updateData: Record<string, unknown> = { updatedAt: now };
-      if (input.locationId !== undefined) updateData.locationId = input.locationId;
       if (input.inboundDate !== undefined) updateData.inboundDate = input.inboundDate;
       if (input.quantity !== undefined) updateData.quantity = input.quantity;
       if (input.purchasePrice !== undefined) updateData.purchasePrice = input.purchasePrice;
@@ -169,7 +129,7 @@ export class InboundService {
   /**
    * 删除入库记录
    */
-  delete(id: string): { record: InboundRecord; stockChange: { bookId: string; locationId: string; currentQuantity: number; changeQuantity: number } } {
+  delete(id: string): { record: InboundRecord; stockChange: { bookId: string; currentQuantity: number; changeQuantity: number } } {
     const sqliteDb = getSqliteDatabase();
     const db = getDatabase();
 
@@ -183,16 +143,9 @@ export class InboundService {
         throw new Error('入库记录不存在');
       }
 
-      const currentQuantity = stockService.getStockQuantity(
-        existing.bookId,
-        existing.locationId,
-      );
+      const currentQuantity = stockService.getStockQuantity(existing.bookId);
 
-      stockService.adjustStock(
-        existing.bookId,
-        existing.locationId,
-        -existing.quantity,
-      );
+      stockService.adjustStock(existing.bookId, -existing.quantity);
 
       db.delete(inboundRecords).where(eq(inboundRecords.id, id)).run();
 
@@ -200,7 +153,6 @@ export class InboundService {
         record: existing as InboundRecord,
         stockChange: {
           bookId: existing.bookId,
-          locationId: existing.locationId,
           currentQuantity,
           changeQuantity: -existing.quantity,
         },
@@ -224,9 +176,6 @@ export class InboundService {
     if (filter?.bookId) {
       conditions.push(eq(inboundRecords.bookId, filter.bookId));
     }
-    if (filter?.locationId) {
-      conditions.push(eq(inboundRecords.locationId, filter.locationId));
-    }
     if (filter?.dateRange?.startDate) {
       conditions.push(gte(inboundRecords.inboundDate, filter.dateRange.startDate));
     }
@@ -239,8 +188,7 @@ export class InboundService {
     const countQuery = db
       .select({ count: count() })
       .from(inboundRecords)
-      .innerJoin(books, eq(inboundRecords.bookId, books.id))
-      .innerJoin(locations, eq(inboundRecords.locationId, locations.id));
+      .innerJoin(books, eq(inboundRecords.bookId, books.id));
 
     if (whereClause) {
       countQuery.where(whereClause);
@@ -253,7 +201,6 @@ export class InboundService {
       .select({
         id: inboundRecords.id,
         bookId: inboundRecords.bookId,
-        locationId: inboundRecords.locationId,
         inboundDate: inboundRecords.inboundDate,
         quantity: inboundRecords.quantity,
         purchasePrice: inboundRecords.purchasePrice,
@@ -261,13 +208,9 @@ export class InboundService {
         createdAt: inboundRecords.createdAt,
         updatedAt: inboundRecords.updatedAt,
         bookTitle: books.title,
-        warehouse: locations.warehouse,
-        shelf: locations.shelf,
-        layer: locations.layer,
       })
       .from(inboundRecords)
-      .innerJoin(books, eq(inboundRecords.bookId, books.id))
-      .innerJoin(locations, eq(inboundRecords.locationId, locations.id));
+      .innerJoin(books, eq(inboundRecords.bookId, books.id));
 
     if (whereClause) {
       dataQuery.where(whereClause);
@@ -282,7 +225,6 @@ export class InboundService {
     const data: InboundRecordView[] = rows.map((row) => ({
       id: row.id,
       bookId: row.bookId,
-      locationId: row.locationId,
       inboundDate: row.inboundDate,
       quantity: row.quantity,
       purchasePrice: row.purchasePrice,
@@ -290,9 +232,6 @@ export class InboundService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       bookTitle: row.bookTitle,
-      warehouse: row.warehouse,
-      shelf: row.shelf,
-      layer: row.layer,
     }));
 
     return {

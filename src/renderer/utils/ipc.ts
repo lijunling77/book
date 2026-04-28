@@ -4,7 +4,6 @@
 
 import {
   BOOK_CHANNELS,
-  LOCATION_CHANNELS,
   INBOUND_CHANNELS,
   OUTBOUND_CHANNELS,
   STOCK_CHANNELS,
@@ -25,10 +24,6 @@ import type {
   SearchBookQuery,
   PaginationInput,
   PaginatedResult,
-  Location,
-  CreateLocationInput,
-  UpdateLocationInput,
-  StockUnitAtLocation,
   InboundRecord,
   CreateInboundInput,
   UpdateInboundInput,
@@ -82,14 +77,6 @@ export const bookApi = {
   getById: (id: string): Promise<Book> => invoke(BOOK_CHANNELS.GET_BY_ID, id),
   search: (query: SearchBookQuery): Promise<Book[]> => invoke(BOOK_CHANNELS.SEARCH, query),
   list: (pagination?: PaginationInput): Promise<PaginatedResult<Book>> => invoke(BOOK_CHANNELS.LIST, pagination),
-};
-
-export const locationApi = {
-  create: (data: CreateLocationInput): Promise<Location> => invoke(LOCATION_CHANNELS.CREATE, data),
-  update: (id: string, data: UpdateLocationInput): Promise<Location> => invoke(LOCATION_CHANNELS.UPDATE, id, data),
-  delete: (id: string): Promise<void> => invoke(LOCATION_CHANNELS.DELETE, id),
-  list: (): Promise<Location[]> => invoke(LOCATION_CHANNELS.LIST),
-  getStock: (id: string): Promise<StockUnitAtLocation[]> => invoke(LOCATION_CHANNELS.GET_STOCK, id),
 };
 
 export const inboundApi = {
@@ -153,7 +140,7 @@ export const exportApi = {
 
 export const importApi = {
   template: (format: ImportFileFormat): Promise<string> => invoke(IMPORT_CHANNELS.TEMPLATE, format),
-  books: (filePath: string): Promise<ImportResultSummary> => invoke(IMPORT_CHANNELS.BOOKS, filePath),
+  books: (): Promise<ImportResultSummary> => invoke(IMPORT_CHANNELS.BOOKS),
 };
 
 export const reportApi = {

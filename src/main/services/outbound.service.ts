@@ -9,7 +9,6 @@ import { getDatabase, getSqliteDatabase } from '../db';
 import {
   outboundRecords,
   books,
-  locations,
 } from '../db/schema';
 import {
   ERROR_MESSAGES,
@@ -43,19 +42,7 @@ export class OutboundService {
         throw new Error(ERROR_MESSAGES.BOOK_NOT_FOUND);
       }
 
-      const location = db
-        .select()
-        .from(locations)
-        .where(eq(locations.id, input.locationId))
-        .get();
-      if (!location) {
-        throw new Error(ERROR_MESSAGES.LOCATION_NOT_FOUND);
-      }
-
-      const currentQuantity = stockService.getStockQuantity(
-        input.bookId,
-        input.locationId,
-      );
+      const currentQuantity = stockService.getStockQuantity(input.bookId);
       if (currentQuantity < input.quantity) {
         throw new Error(
           `${ERROR_MESSAGES.INSUFFICIENT_STOCK}，当前可用库存数量：${currentQuantity}`,
@@ -68,7 +55,6 @@ export class OutboundService {
       const newRecord: typeof outboundRecords.$inferInsert = {
         id,
         bookId: input.bookId,
-        locationId: input.locationId,
         outboundDate: input.outboundDate,
         quantity: input.quantity,
         sellingPrice: input.sellingPrice,
@@ -79,11 +65,7 @@ export class OutboundService {
 
       db.insert(outboundRecords).values(newRecord).run();
 
-      stockService.adjustStock(
-        input.bookId,
-        input.locationId,
-        -input.quantity,
-      );
+      stockService.adjustStock(input.bookId, -input.quantity);
 
       const created = db
         .select()
@@ -116,35 +98,15 @@ export class OutboundService {
 
       const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-      const newLocationId = input.locationId ?? existing.locationId;
       const newQuantity = input.quantity ?? existing.quantity;
-      const locationChanged = input.locationId !== undefined && input.locationId !== existing.locationId;
       const quantityChanged = input.quantity !== undefined && input.quantity !== existing.quantity;
 
-      if (locationChanged) {
-        const location = db
-          .select()
-          .from(locations)
-          .where(eq(locations.id, newLocationId))
-          .get();
-        if (!location) {
-          throw new Error(ERROR_MESSAGES.LOCATION_NOT_FOUND);
-        }
-      }
-
-      if (locationChanged && quantityChanged) {
-        stockService.adjustStock(existing.bookId, existing.locationId, existing.quantity);
-        stockService.adjustStock(existing.bookId, newLocationId, -newQuantity);
-      } else if (locationChanged) {
-        stockService.adjustStock(existing.bookId, existing.locationId, existing.quantity);
-        stockService.adjustStock(existing.bookId, newLocationId, -existing.quantity);
-      } else if (quantityChanged) {
+      if (quantityChanged) {
         const delta = existing.quantity - newQuantity;
-        stockService.adjustStock(existing.bookId, existing.locationId, delta);
+        stockService.adjustStock(existing.bookId, delta);
       }
 
       const updateData: Record<string, unknown> = { updatedAt: now };
-      if (input.locationId !== undefined) updateData.locationId = input.locationId;
       if (input.outboundDate !== undefined) updateData.outboundDate = input.outboundDate;
       if (input.quantity !== undefined) updateData.quantity = input.quantity;
       if (input.sellingPrice !== undefined) updateData.sellingPrice = input.sellingPrice;
@@ -170,7 +132,7 @@ export class OutboundService {
   /**
    * 删除出库记录
    */
-  delete(id: string): { record: OutboundRecord; stockChange: { bookId: string; locationId: string; currentQuantity: number; changeQuantity: number } } {
+  delete(id: string): { record: OutboundRecord; stockChange: { bookId: string; currentQuantity: number; changeQuantity: number } } {
     const sqliteDb = getSqliteDatabase();
     const db = getDatabase();
 
@@ -184,16 +146,9 @@ export class OutboundService {
         throw new Error('出库记录不存在');
       }
 
-      const currentQuantity = stockService.getStockQuantity(
-        existing.bookId,
-        existing.locationId,
-      );
+      const currentQuantity = stockService.getStockQuantity(existing.bookId);
 
-      stockService.adjustStock(
-        existing.bookId,
-        existing.locationId,
-        existing.quantity,
-      );
+      stockService.adjustStock(existing.bookId, existing.quantity);
 
       db.delete(outboundRecords).where(eq(outboundRecords.id, id)).run();
 
@@ -201,7 +156,6 @@ export class OutboundService {
         record: existing as OutboundRecord,
         stockChange: {
           bookId: existing.bookId,
-          locationId: existing.locationId,
           currentQuantity,
           changeQuantity: existing.quantity,
         },
@@ -225,9 +179,6 @@ export class OutboundService {
     if (filter?.bookId) {
       conditions.push(eq(outboundRecords.bookId, filter.bookId));
     }
-    if (filter?.locationId) {
-      conditions.push(eq(outboundRecords.locationId, filter.locationId));
-    }
     if (filter?.dateRange?.startDate) {
       conditions.push(gte(outboundRecords.outboundDate, filter.dateRange.startDate));
     }
@@ -240,8 +191,7 @@ export class OutboundService {
     const countQuery = db
       .select({ count: count() })
       .from(outboundRecords)
-      .innerJoin(books, eq(outboundRecords.bookId, books.id))
-      .innerJoin(locations, eq(outboundRecords.locationId, locations.id));
+      .innerJoin(books, eq(outboundRecords.bookId, books.id));
 
     if (whereClause) {
       countQuery.where(whereClause);
@@ -254,7 +204,6 @@ export class OutboundService {
       .select({
         id: outboundRecords.id,
         bookId: outboundRecords.bookId,
-        locationId: outboundRecords.locationId,
         outboundDate: outboundRecords.outboundDate,
         quantity: outboundRecords.quantity,
         sellingPrice: outboundRecords.sellingPrice,
@@ -262,13 +211,9 @@ export class OutboundService {
         createdAt: outboundRecords.createdAt,
         updatedAt: outboundRecords.updatedAt,
         bookTitle: books.title,
-        warehouse: locations.warehouse,
-        shelf: locations.shelf,
-        layer: locations.layer,
       })
       .from(outboundRecords)
-      .innerJoin(books, eq(outboundRecords.bookId, books.id))
-      .innerJoin(locations, eq(outboundRecords.locationId, locations.id));
+      .innerJoin(books, eq(outboundRecords.bookId, books.id));
 
     if (whereClause) {
       dataQuery.where(whereClause);
@@ -283,7 +228,6 @@ export class OutboundService {
     const data: OutboundRecordView[] = rows.map((row) => ({
       id: row.id,
       bookId: row.bookId,
-      locationId: row.locationId,
       outboundDate: row.outboundDate,
       quantity: row.quantity,
       sellingPrice: row.sellingPrice,
@@ -291,9 +235,6 @@ export class OutboundService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       bookTitle: row.bookTitle,
-      warehouse: row.warehouse,
-      shelf: row.shelf,
-      layer: row.layer,
     }));
 
     return {

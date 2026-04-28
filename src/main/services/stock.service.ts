@@ -3,13 +3,12 @@
  * 提供库存数量查询、调整、列表和汇总功能
  */
 
-import { eq, and, like, sql, count } from 'drizzle-orm';
+import { eq, like, sql, count } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db';
 import {
   stock,
   books,
-  locations,
   inboundRecords,
   outboundRecords,
 } from '../db/schema';
@@ -28,20 +27,15 @@ import type {
 
 export class StockService {
   /**
-   * 查询特定书籍在特定位置的库存数量
+   * 查询特定书籍的库存数量
    */
-  getStockQuantity(bookId: string, locationId: string): number {
+  getStockQuantity(bookId: string): number {
     const db = getDatabase();
 
     const record = db
       .select({ quantity: stock.quantity })
       .from(stock)
-      .where(
-        and(
-          eq(stock.bookId, bookId),
-          eq(stock.locationId, locationId),
-        ),
-      )
+      .where(eq(stock.bookId, bookId))
       .get();
 
     return record?.quantity ?? 0;
@@ -50,19 +44,14 @@ export class StockService {
   /**
    * 调整库存数量（delta 可正可负）
    */
-  adjustStock(bookId: string, locationId: string, delta: number): void {
+  adjustStock(bookId: string, delta: number): void {
     const db = getDatabase();
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const existing = db
       .select()
       .from(stock)
-      .where(
-        and(
-          eq(stock.bookId, bookId),
-          eq(stock.locationId, locationId),
-        ),
-      )
+      .where(eq(stock.bookId, bookId))
       .get();
 
     if (existing) {
@@ -85,7 +74,6 @@ export class StockService {
           .values({
             id: uuidv4(),
             bookId,
-            locationId,
             quantity: delta,
             updatedAt: now,
           })
@@ -95,20 +83,10 @@ export class StockService {
   }
 
   /**
-   * 查询书籍在所有位置的总数量
+   * 查询书籍的总库存数量
    */
   getTotalStock(bookId: string): number {
-    const db = getDatabase();
-
-    const result = db
-      .select({
-        total: sql<number>`COALESCE(SUM(${stock.quantity}), 0)`,
-      })
-      .from(stock)
-      .where(eq(stock.bookId, bookId))
-      .get();
-
-    return result?.total ?? 0;
+    return this.getStockQuantity(bookId);
   }
 
   /**
@@ -125,17 +103,13 @@ export class StockService {
     if (filter?.bookTitle) {
       conditions.push(like(books.title, `%${filter.bookTitle}%`));
     }
-    if (filter?.locationId) {
-      conditions.push(eq(stock.locationId, filter.locationId));
-    }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length > 0 ? conditions[0] : undefined;
 
     const countQuery = db
       .select({ count: count() })
       .from(stock)
-      .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(locations, eq(stock.locationId, locations.id));
+      .innerJoin(books, eq(stock.bookId, books.id));
 
     if (whereClause) {
       countQuery.where(whereClause);
@@ -148,17 +122,12 @@ export class StockService {
       .select({
         stockId: stock.id,
         bookId: stock.bookId,
-        locationId: stock.locationId,
         quantity: stock.quantity,
         bookTitle: books.title,
         author: books.author,
-        warehouse: locations.warehouse,
-        shelf: locations.shelf,
-        layer: locations.layer,
       })
       .from(stock)
-      .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(locations, eq(stock.locationId, locations.id));
+      .innerJoin(books, eq(stock.bookId, books.id));
 
     if (whereClause) {
       dataQuery.where(whereClause);
@@ -172,12 +141,8 @@ export class StockService {
       return {
         stockId: row.stockId,
         bookId: row.bookId,
-        locationId: row.locationId,
         bookTitle: row.bookTitle,
         author: row.author,
-        warehouse: row.warehouse,
-        shelf: row.shelf,
-        layer: row.layer,
         quantity: row.quantity,
         status: row.quantity === 0 ? STOCK_STATUS.OUT_OF_STOCK : STOCK_STATUS.NORMAL,
         latestPurchasePrice: priceStats.latestPurchasePrice,
@@ -198,7 +163,7 @@ export class StockService {
   }
 
   /**
-   * 汇总视图：显示每本书在所有位置的总库存数量
+   * 汇总视图：显示每本书的总库存数量
    */
   summary(filter?: StockFilter): StockSummaryView[] {
     const db = getDatabase();
@@ -208,11 +173,8 @@ export class StockService {
     if (filter?.bookTitle) {
       conditions.push(like(books.title, `%${filter.bookTitle}%`));
     }
-    if (filter?.locationId) {
-      conditions.push(eq(stock.locationId, filter.locationId));
-    }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length > 0 ? conditions[0] : undefined;
 
     const query = db
       .select({
@@ -222,8 +184,7 @@ export class StockService {
         totalQuantity: sql<number>`COALESCE(SUM(${stock.quantity}), 0)`,
       })
       .from(stock)
-      .innerJoin(books, eq(stock.bookId, books.id))
-      .innerJoin(locations, eq(stock.locationId, locations.id));
+      .innerJoin(books, eq(stock.bookId, books.id));
 
     if (whereClause) {
       query.where(whereClause);

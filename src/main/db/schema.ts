@@ -15,24 +15,10 @@ export const books = sqliteTable('books', {
   title: text('title').notNull(),
   author: text('author'),
   description: text('description'),
+  location: text('location'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
 });
-
-// ============================================================
-// 位置表
-// ============================================================
-
-export const locations = sqliteTable('locations', {
-  id: text('id').primaryKey(),
-  warehouse: text('warehouse').notNull(),
-  shelf: text('shelf').notNull(),
-  layer: text('layer').notNull(),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now','localtime'))`),
-  updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
-}, (table) => ({
-  warehouseShelfLayerUnique: uniqueIndex('locations_warehouse_shelf_layer_unique').on(table.warehouse, table.shelf, table.layer),
-}));
 
 // ============================================================
 // 库存表
@@ -41,11 +27,10 @@ export const locations = sqliteTable('locations', {
 export const stock = sqliteTable('stock', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  locationId: text('location_id').notNull().references(() => locations.id),
   quantity: integer('quantity').notNull().default(0),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now','localtime'))`),
 }, (table) => ({
-  bookLocationUnique: uniqueIndex('stock_book_location_unique').on(table.bookId, table.locationId),
+  bookUnique: uniqueIndex('stock_book_unique').on(table.bookId),
 }));
 
 // ============================================================
@@ -55,7 +40,6 @@ export const stock = sqliteTable('stock', {
 export const inboundRecords = sqliteTable('inbound_records', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  locationId: text('location_id').notNull().references(() => locations.id),
   inboundDate: text('inbound_date').notNull(),
   quantity: integer('quantity').notNull(),
   purchasePrice: real('purchase_price').notNull(),
@@ -71,7 +55,6 @@ export const inboundRecords = sqliteTable('inbound_records', {
 export const outboundRecords = sqliteTable('outbound_records', {
   id: text('id').primaryKey(),
   bookId: text('book_id').notNull().references(() => books.id),
-  locationId: text('location_id').notNull().references(() => locations.id),
   outboundDate: text('outbound_date').notNull(),
   quantity: integer('quantity').notNull(),
   sellingPrice: real('selling_price').notNull(),
@@ -101,7 +84,6 @@ export const stocktakingItems = sqliteTable('stocktaking_items', {
   id: text('id').primaryKey(),
   taskId: text('task_id').notNull().references(() => stocktakingTasks.id, { onDelete: 'cascade' }),
   bookId: text('book_id').notNull().references(() => books.id),
-  locationId: text('location_id').notNull().references(() => locations.id),
   systemQuantity: integer('system_quantity').notNull(),
   actualQuantity: integer('actual_quantity'),
   variance: integer('variance'),

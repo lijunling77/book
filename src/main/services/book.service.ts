@@ -32,6 +32,7 @@ export class BookService {
       title: input.title,
       author: input.author ?? null,
       description: input.description ?? null,
+      location: input.location ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -60,6 +61,7 @@ export class BookService {
     if (input.title !== undefined) updateData.title = input.title;
     if (input.author !== undefined) updateData.author = input.author;
     if (input.description !== undefined) updateData.description = input.description;
+    if (input.location !== undefined) updateData.location = input.location;
 
     db.update(books).set(updateData).where(eq(books.id, id)).run();
 

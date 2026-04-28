@@ -17,18 +17,6 @@ export const BOOK_CHANNELS = {
 } as const;
 
 // ============================================================
-// 位置管理
-// ============================================================
-
-export const LOCATION_CHANNELS = {
-  CREATE: 'location:create',
-  UPDATE: 'location:update',
-  DELETE: 'location:delete',
-  LIST: 'location:list',
-  GET_STOCK: 'location:getStock',
-} as const;
-
-// ============================================================
 // 入库管理
 // ============================================================
 
@@ -147,7 +135,6 @@ export const REPORT_CHANNELS = {
 
 export const ALL_CHANNELS = {
   ...BOOK_CHANNELS,
-  ...LOCATION_CHANNELS,
   ...INBOUND_CHANNELS,
   ...OUTBOUND_CHANNELS,
   ...STOCK_CHANNELS,

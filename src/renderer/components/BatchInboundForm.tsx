@@ -2,24 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Input, InputNumber, DatePicker, Select, Button, Space, Table, message, Alert } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import type { Book, Location, CreateInboundInput, BatchResultSummary } from '../../shared/types';
-import { bookApi, inboundApi, locationApi } from '../utils/ipc';
+import type { Book, CreateInboundInput, BatchResultSummary } from '../../shared/types';
+import { bookApi, inboundApi } from '../utils/ipc';
 
 interface BatchInboundFormProps { open: boolean; onClose: () => void; onSuccess: () => void; }
-interface InboundRow { key: number; bookId?: string; locationId?: string; inboundDate?: dayjs.Dayjs; quantity?: number; purchasePrice?: number; supplier?: string; }
+interface InboundRow { key: number; bookId?: string; inboundDate?: dayjs.Dayjs; quantity?: number; purchasePrice?: number; supplier?: string; }
 
 const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSuccess }) => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
   const [rows, setRows] = useState<InboundRow[]>([{ key: 1 }]);
   const [nextKey, setNextKey] = useState(2);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<BatchResultSummary | null>(null);
 
-  useEffect(() => { if (open) { loadBooks(); loadLocations(); setRows([{ key: 1 }]); setNextKey(2); setResult(null); } }, [open]);
+  useEffect(() => { if (open) { loadBooks(); setRows([{ key: 1 }]); setNextKey(2); setResult(null); } }, [open]);
 
   const loadBooks = async () => { try { const r = await bookApi.list({ page: 1, pageSize: 1000 }); setBooks(r.data); } catch {} };
-  const loadLocations = async () => { try { setLocations(await locationApi.list()); } catch {} };
 
   const updateRow = (key: number, field: string, value: unknown) => {
     setRows((prev) => prev.map((r) => r.key !== key ? r : { ...r, [field]: value }));
@@ -30,8 +28,8 @@ const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSu
   const handleSubmit = async () => {
     const inputs: CreateInboundInput[] = [];
     for (const row of rows) {
-      if (!row.bookId || !row.locationId || !row.inboundDate || !row.quantity || row.purchasePrice == null) { message.warning('请填写所有必填字段'); return; }
-      inputs.push({ bookId: row.bookId, locationId: row.locationId, inboundDate: row.inboundDate.format('YYYY-MM-DD'), quantity: row.quantity, purchasePrice: row.purchasePrice, supplier: row.supplier || null });
+      if (!row.bookId || !row.inboundDate || !row.quantity || row.purchasePrice == null) { message.warning('请填写所有必填字段'); return; }
+      inputs.push({ bookId: row.bookId, inboundDate: row.inboundDate.format('YYYY-MM-DD'), quantity: row.quantity, purchasePrice: row.purchasePrice, supplier: row.supplier || null });
     }
     setSubmitting(true);
     try {
@@ -54,8 +52,7 @@ const BatchInboundForm: React.FC<BatchInboundFormProps> = ({ open, onClose, onSu
         <div>
           {rows.map((row) => (
             <Space key={row.key} style={{ display: 'flex', marginBottom: 8 }} align="start" wrap>
-              <Select placeholder="书籍" style={{ width: 160 }} showSearch optionFilterProp="label" value={row.bookId} onChange={(v) => updateRow(row.key, 'bookId', v)} options={books.map((b) => ({ value: b.id, label: b.title }))} />
-              <Select placeholder="位置" style={{ width: 160 }} showSearch optionFilterProp="label" value={row.locationId} onChange={(v) => updateRow(row.key, 'locationId', v)} options={locations.map((l) => ({ value: l.id, label: `${l.warehouse}-${l.shelf}-${l.layer}` }))} />
+              <Select placeholder="书籍" style={{ width: 180 }} showSearch optionFilterProp="label" value={row.bookId} onChange={(v) => updateRow(row.key, 'bookId', v)} options={books.map((b) => ({ value: b.id, label: b.title }))} />
               <DatePicker placeholder="日期" value={row.inboundDate} onChange={(v) => updateRow(row.key, 'inboundDate', v)} />
               <InputNumber placeholder="数量" min={1} style={{ width: 80 }} value={row.quantity} onChange={(v) => updateRow(row.key, 'quantity', v)} />
               <InputNumber placeholder="价格" min={0} step={0.01} precision={2} style={{ width: 100 }} value={row.purchasePrice} onChange={(v) => updateRow(row.key, 'purchasePrice', v)} />

@@ -21,33 +21,22 @@ const CREATE_TABLES_SQL = `
     title TEXT NOT NULL,
     author TEXT,
     description TEXT,
+    location TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
-  );
-
-  CREATE TABLE IF NOT EXISTS locations (
-    id TEXT PRIMARY KEY,
-    warehouse TEXT NOT NULL,
-    shelf TEXT NOT NULL,
-    layer TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    UNIQUE(warehouse, shelf, layer)
   );
 
   CREATE TABLE IF NOT EXISTS stock (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    location_id TEXT NOT NULL REFERENCES locations(id),
     quantity INTEGER NOT NULL DEFAULT 0 CHECK(quantity >= 0),
     updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-    UNIQUE(book_id, location_id)
+    UNIQUE(book_id)
   );
 
   CREATE TABLE IF NOT EXISTS inbound_records (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    location_id TEXT NOT NULL REFERENCES locations(id),
     inbound_date TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK(quantity > 0),
     purchase_price REAL NOT NULL CHECK(purchase_price >= 0),
@@ -59,7 +48,6 @@ const CREATE_TABLES_SQL = `
   CREATE TABLE IF NOT EXISTS outbound_records (
     id TEXT PRIMARY KEY,
     book_id TEXT NOT NULL REFERENCES books(id),
-    location_id TEXT NOT NULL REFERENCES locations(id),
     outbound_date TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK(quantity > 0),
     selling_price REAL NOT NULL CHECK(selling_price >= 0),
@@ -81,7 +69,6 @@ const CREATE_TABLES_SQL = `
     id TEXT PRIMARY KEY,
     task_id TEXT NOT NULL REFERENCES stocktaking_tasks(id) ON DELETE CASCADE,
     book_id TEXT NOT NULL REFERENCES books(id),
-    location_id TEXT NOT NULL REFERENCES locations(id),
     system_quantity INTEGER NOT NULL,
     actual_quantity INTEGER,
     variance INTEGER,

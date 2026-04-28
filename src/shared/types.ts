@@ -37,6 +37,7 @@ export interface Book {
   title: string;
   author: string | null;
   description: string | null;
+  location: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +47,7 @@ export interface CreateBookInput {
   title: string;
   author?: string | null;
   description?: string | null;
+  location?: string | null;
 }
 
 /** 更新书籍输入 */
@@ -53,46 +55,12 @@ export interface UpdateBookInput {
   title?: string;
   author?: string;
   description?: string | null;
+  location?: string;
 }
 
 /** 搜索书籍查询 */
 export interface SearchBookQuery {
   keyword: string;
-}
-
-// ============================================================
-// 位置
-// ============================================================
-
-/** 位置实体 */
-export interface Location {
-  id: string;
-  warehouse: string;
-  shelf: string;
-  layer: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** 创建位置输入 */
-export interface CreateLocationInput {
-  warehouse: string;
-  shelf: string;
-  layer: string;
-}
-
-/** 更新位置输入 */
-export interface UpdateLocationInput {
-  warehouse?: string;
-  shelf?: string;
-  layer?: string;
-}
-
-/** 位置下的库存单元信息 */
-export interface StockUnitAtLocation {
-  bookId: string;
-  bookTitle: string;
-  quantity: number;
 }
 
 // ============================================================
@@ -103,7 +71,6 @@ export interface StockUnitAtLocation {
 export interface Stock {
   id: string;
   bookId: string;
-  locationId: string;
   quantity: number;
   updatedAt: string;
 }
@@ -111,7 +78,6 @@ export interface Stock {
 /** 库存筛选条件 */
 export interface StockFilter {
   bookTitle?: string;
-  locationId?: string;
   page?: number;
   pageSize?: number;
 }
@@ -120,12 +86,8 @@ export interface StockFilter {
 export interface StockView {
   stockId: string;
   bookId: string;
-  locationId: string;
   bookTitle: string;
   author: string | null;
-  warehouse: string;
-  shelf: string;
-  layer: string;
   quantity: number;
   status: '正常' | '缺货';
   latestPurchasePrice: number | null;
@@ -136,7 +98,7 @@ export interface StockView {
   averageSellingPrice: number | null;
 }
 
-/** 库存汇总视图（所有位置合计） */
+/** 库存汇总视图 */
 export interface StockSummaryView {
   bookId: string;
   bookTitle: string;
@@ -152,7 +114,6 @@ export interface StockSummaryView {
 export interface InboundRecord {
   id: string;
   bookId: string;
-  locationId: string;
   inboundDate: string;
   quantity: number;
   purchasePrice: number;
@@ -164,15 +125,11 @@ export interface InboundRecord {
 /** 入库记录视图（含关联信息） */
 export interface InboundRecordView extends InboundRecord {
   bookTitle: string;
-  warehouse: string;
-  shelf: string;
-  layer: string;
 }
 
 /** 创建入库记录输入 */
 export interface CreateInboundInput {
   bookId: string;
-  locationId: string;
   inboundDate: string;
   quantity: number;
   purchasePrice: number;
@@ -181,7 +138,6 @@ export interface CreateInboundInput {
 
 /** 更新入库记录输入 */
 export interface UpdateInboundInput {
-  locationId?: string;
   inboundDate?: string;
   quantity?: number;
   purchasePrice?: number;
@@ -191,7 +147,6 @@ export interface UpdateInboundInput {
 /** 入库记录筛选条件 */
 export interface InboundFilter {
   bookId?: string;
-  locationId?: string;
   dateRange?: DateRange;
   supplier?: string;
   page?: number;
@@ -206,7 +161,6 @@ export interface InboundFilter {
 export interface OutboundRecord {
   id: string;
   bookId: string;
-  locationId: string;
   outboundDate: string;
   quantity: number;
   sellingPrice: number;
@@ -218,15 +172,11 @@ export interface OutboundRecord {
 /** 出库记录视图（含关联信息） */
 export interface OutboundRecordView extends OutboundRecord {
   bookTitle: string;
-  warehouse: string;
-  shelf: string;
-  layer: string;
 }
 
 /** 创建出库记录输入 */
 export interface CreateOutboundInput {
   bookId: string;
-  locationId: string;
   outboundDate: string;
   quantity: number;
   sellingPrice: number;
@@ -235,7 +185,6 @@ export interface CreateOutboundInput {
 
 /** 更新出库记录输入 */
 export interface UpdateOutboundInput {
-  locationId?: string;
   outboundDate?: string;
   quantity?: number;
   sellingPrice?: number;
@@ -245,7 +194,6 @@ export interface UpdateOutboundInput {
 /** 出库记录筛选条件 */
 export interface OutboundFilter {
   bookId?: string;
-  locationId?: string;
   dateRange?: DateRange;
   buyer?: string;
   page?: number;
@@ -303,7 +251,7 @@ export interface ProfitFilter {
 // ============================================================
 
 /** 盘点范围类型 */
-export type StocktakingScopeType = 'location';
+export type StocktakingScopeType = 'all';
 
 /** 盘点任务状态 */
 export type StocktakingStatus = 'in_progress' | 'completed';
@@ -326,7 +274,6 @@ export interface StocktakingItem {
   id: string;
   taskId: string;
   bookId: string;
-  locationId: string;
   systemQuantity: number;
   actualQuantity: number | null;
   variance: number | null;
@@ -336,9 +283,6 @@ export interface StocktakingItem {
 /** 盘点项视图（含关联信息） */
 export interface StocktakingItemView extends StocktakingItem {
   bookTitle: string;
-  warehouse: string;
-  shelf: string;
-  layer: string;
 }
 
 /** 盘点详情（任务 + 所有盘点项） */

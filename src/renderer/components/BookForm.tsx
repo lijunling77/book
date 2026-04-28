@@ -22,6 +22,7 @@ const BookForm: React.FC<BookFormProps> = ({ open, book, onClose, onSuccess }) =
           title: book.title,
           author: book.author ?? '',
           description: book.description ?? '',
+          location: book.location ?? '',
         });
       } else {
         form.resetFields();
@@ -39,6 +40,7 @@ const BookForm: React.FC<BookFormProps> = ({ open, book, onClose, onSuccess }) =
           title: values.title,
           author: values.author || null,
           description: values.description || null,
+          location: values.location || null,
         };
         await bookApi.update(book.id, updateData);
         message.success('书籍更新成功');
@@ -47,6 +49,7 @@ const BookForm: React.FC<BookFormProps> = ({ open, book, onClose, onSuccess }) =
           title: values.title,
           author: values.author || null,
           description: values.description || null,
+          location: values.location || null,
         };
         await bookApi.create(createData);
         message.success('书籍创建成功');
@@ -84,6 +87,9 @@ const BookForm: React.FC<BookFormProps> = ({ open, book, onClose, onSuccess }) =
         </Form.Item>
         <Form.Item name="author" label="作者">
           <Input placeholder="请输入作者（可选）" />
+        </Form.Item>
+        <Form.Item name="location" label="存放位置">
+          <Input placeholder="请输入存放位置（可选），如 A架3层" />
         </Form.Item>
         <Form.Item name="description" label="描述">
           <Input.TextArea rows={2} placeholder="请输入描述（可选）" />
