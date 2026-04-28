@@ -1,6 +1,6 @@
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -18,9 +18,57 @@ import ImportBooks from './pages/ImportBooks';
 import BackupRestore from './pages/BackupRestore';
 import Report from './pages/Report';
 
+const eyeCareTheme = {
+  token: {
+    colorPrimary: '#5b8c5a',
+    colorBgContainer: '#f5f0e8',
+    colorBgElevated: '#faf6ee',
+    colorBgLayout: '#ede8dc',
+    colorText: '#3d3929',
+    colorTextSecondary: '#6b6452',
+    colorBorder: '#d4cdb8',
+    colorBorderSecondary: '#e0d9c8',
+    borderRadius: 6,
+    fontSize: 14,
+  },
+  components: {
+    Table: {
+      headerBg: '#e8e2d2',
+      headerColor: '#3d3929',
+      rowHoverBg: '#ece6d6',
+      borderColor: '#d4cdb8',
+    },
+    Menu: {
+      itemBg: '#f5f0e8',
+      itemSelectedBg: '#ddd6c2',
+      itemSelectedColor: '#3d5a3d',
+      itemHoverBg: '#ece6d6',
+    },
+    Card: {
+      colorBgContainer: '#faf6ee',
+    },
+    Modal: {
+      contentBg: '#faf6ee',
+      headerBg: '#faf6ee',
+    },
+    Input: {
+      colorBgContainer: '#fdfaf2',
+    },
+    Select: {
+      colorBgContainer: '#fdfaf2',
+    },
+    DatePicker: {
+      colorBgContainer: '#fdfaf2',
+    },
+    InputNumber: {
+      colorBgContainer: '#fdfaf2',
+    },
+  },
+};
+
 const App: React.FC = () => {
   return (
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider locale={zhCN} theme={eyeCareTheme}>
       <HashRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
