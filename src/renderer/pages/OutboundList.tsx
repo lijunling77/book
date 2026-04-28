@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Table, Button, Space, Typography, Popconfirm, message, Alert, DatePicker, Select } from 'antd';
-import { PlusOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { PlusOutlined, UnorderedListOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { OutboundRecord, OutboundFilter, Book, Location } from '../../shared/types';
@@ -27,19 +27,26 @@ const OutboundList: React.FC = () => {
   const [filterLocationId, setFilterLocationId] = useState<string | undefined>();
   const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
 
+  const filterBookIdRef = React.useRef(filterBookId);
+  const filterLocationIdRef = React.useRef(filterLocationId);
+  const filterDateRangeRef = React.useRef(filterDateRange);
+  filterBookIdRef.current = filterBookId;
+  filterLocationIdRef.current = filterLocationId;
+  filterDateRangeRef.current = filterDateRange;
+
   const fetchRecords = useCallback(async (p?: number, ps?: number) => {
     setLoading(true); setError(null);
     try {
       const filter: OutboundFilter = { page: p ?? page, pageSize: ps ?? pageSize };
-      if (filterBookId) filter.bookId = filterBookId;
-      if (filterLocationId) filter.locationId = filterLocationId;
-      if (filterDateRange) filter.dateRange = { startDate: filterDateRange[0].format('YYYY-MM-DD'), endDate: filterDateRange[1].format('YYYY-MM-DD') };
+      if (filterBookIdRef.current) filter.bookId = filterBookIdRef.current;
+      if (filterLocationIdRef.current) filter.locationId = filterLocationIdRef.current;
+      if (filterDateRangeRef.current) filter.dateRange = { startDate: filterDateRangeRef.current[0].format('YYYY-MM-DD'), endDate: filterDateRangeRef.current[1].format('YYYY-MM-DD') };
       const result = await outboundApi.list(filter);
       setRecords(result.data);
       setTotal(result.total);
     } catch (err) { setError(err instanceof Error ? err.message : '获取出库记录失败'); }
     finally { setLoading(false); }
-  }, [page, pageSize, filterBookId, filterLocationId, filterDateRange]);
+  }, [page, pageSize]);
 
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
   useEffect(() => { bookApi.list({ page: 1, pageSize: 1000 }).then((r) => setBooks(r.data)).catch(() => {}); locationApi.list().then(setLocations).catch(() => {}); }, []);
@@ -62,9 +69,11 @@ const OutboundList: React.FC = () => {
       <Typography.Title level={4}>出库管理</Typography.Title>
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
       <Space style={{ marginBottom: 16 }} wrap>
-        <Select placeholder="按书籍筛选" allowClear showSearch optionFilterProp="label" style={{ width: 200 }} value={filterBookId} onChange={(v) => { setFilterBookId(v); setPage(1); }} options={books.map((b) => ({ value: b.id, label: b.title }))} />
-        <Select placeholder="按位置筛选" allowClear showSearch optionFilterProp="label" style={{ width: 200 }} value={filterLocationId} onChange={(v) => { setFilterLocationId(v); setPage(1); }} options={locations.map((l) => ({ value: l.id, label: `${l.warehouse}-${l.shelf}-${l.layer}` }))} />
-        <RangePicker value={filterDateRange} onChange={(dates) => { setFilterDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null); setPage(1); }} />
+        <Select placeholder="按书籍筛选" allowClear showSearch optionFilterProp="label" style={{ width: 200 }} value={filterBookId} onChange={(v) => { setFilterBookId(v); }} options={books.map((b) => ({ value: b.id, label: b.title }))} />
+        <Select placeholder="按位置筛选" allowClear showSearch optionFilterProp="label" style={{ width: 200 }} value={filterLocationId} onChange={(v) => { setFilterLocationId(v); }} options={locations.map((l) => ({ value: l.id, label: `${l.warehouse}-${l.shelf}-${l.layer}` }))} />
+        <RangePicker value={filterDateRange} onChange={(dates) => { setFilterDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null); }} />
+        <Button type="primary" icon={<SearchOutlined />} onClick={() => { setPage(1); fetchRecords(1); }}>查询</Button>
+        <Button icon={<ReloadOutlined />} onClick={() => { setFilterBookId(undefined); setFilterLocationId(undefined); setFilterDateRange(null); filterBookIdRef.current = undefined; filterLocationIdRef.current = undefined; filterDateRangeRef.current = null; setPage(1); fetchRecords(1); }}>重置</Button>
       </Space>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
         <Button icon={<UnorderedListOutlined />} onClick={() => setBatchFormOpen(true)}>批量出库</Button>

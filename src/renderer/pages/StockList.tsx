@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Typography, Alert, Select, Input, Space, Tag, Switch } from 'antd';
+import { Table, Typography, Alert, Select, Input, Space, Tag, Switch, Button } from 'antd';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { StockView, StockSummaryView, Location } from '../../shared/types';
 import { locationApi } from '../utils/ipc';
@@ -10,6 +11,8 @@ import { formatPriceValue } from '../utils/format';
 const StockList: React.FC = () => {
   const { stocks, summaryStocks, total, page, pageSize, loading, error, viewMode, filter, fetchStocks, fetchSummary, setViewMode, setFilter, setPage } = useStockStore();
   const [locations, setLocations] = useState<Location[]>([]);
+  const [localBookTitle, setLocalBookTitle] = useState<string | undefined>(filter.bookTitle);
+  const [localLocationId, setLocalLocationId] = useState<string | undefined>(filter.locationId);
 
   useEffect(() => { locationApi.list().then(setLocations).catch(() => {}); }, []);
 
@@ -19,11 +22,23 @@ const StockList: React.FC = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const handleFilterChange = (key: string, value: string | undefined) => {
-    setFilter({ [key]: value });
+  const handleQuery = () => {
+    const newFilter = { bookTitle: localBookTitle, locationId: localLocationId, page: 1, pageSize };
+    setFilter({ bookTitle: localBookTitle, locationId: localLocationId });
     setPage(1, pageSize);
-    // 筛选变化后立即重新加载
-    const newFilter = { ...filter, [key]: value, page: 1, pageSize };
+    if (viewMode === 'detail') {
+      fetchStocks(newFilter);
+    } else {
+      fetchSummary(newFilter);
+    }
+  };
+
+  const handleReset = () => {
+    setLocalBookTitle(undefined);
+    setLocalLocationId(undefined);
+    setFilter({ bookTitle: undefined, locationId: undefined });
+    setPage(1, pageSize);
+    const newFilter = { bookTitle: undefined, locationId: undefined, page: 1, pageSize };
     if (viewMode === 'detail') {
       fetchStocks(newFilter);
     } else {
@@ -55,8 +70,10 @@ const StockList: React.FC = () => {
       <Typography.Title level={4}>库存查询</Typography.Title>
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
       <Space style={{ marginBottom: 16 }} wrap>
-        <Input.Search placeholder="按书名筛选" allowClear style={{ width: 200 }} onSearch={(v) => handleFilterChange('bookTitle', v || undefined)} />
-        <Select placeholder="按位置筛选" allowClear showSearch optionFilterProp="label" style={{ width: 200 }} value={filter.locationId} onChange={(v) => handleFilterChange('locationId', v)} options={locations.map((l) => ({ value: l.id, label: `${l.warehouse}-${l.shelf}-${l.layer}` }))} />
+        <Input placeholder="按书名筛选" allowClear style={{ width: 200 }} value={localBookTitle} onChange={(e) => setLocalBookTitle(e.target.value || undefined)} />
+        <Select placeholder="按位置筛选" allowClear showSearch optionFilterProp="label" style={{ width: 200 }} value={localLocationId} onChange={(v) => setLocalLocationId(v)} options={locations.map((l) => ({ value: l.id, label: `${l.warehouse}-${l.shelf}-${l.layer}` }))} />
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleQuery}>查询</Button>
+        <Button icon={<ReloadOutlined />} onClick={handleReset}>重置</Button>
         <Space><span>汇总视图</span><Switch checked={viewMode === 'summary'} onChange={(checked) => setViewMode(checked ? 'summary' : 'detail')} /></Space>
       </Space>
       {viewMode === 'detail' ? (

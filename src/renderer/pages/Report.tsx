@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Typography, Table, DatePicker, Space, Spin, Alert, Button, Input, message } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import { reportApi } from '../utils/ipc';
@@ -39,6 +39,7 @@ const Report: React.FC = () => {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
   const [filterTitle, setFilterTitle] = useState('');
   const [filterLocation, setFilterLocation] = useState('');
+  const [localDateRange, setLocalDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
 
   const [exporting, setExporting] = useState(false);
 
@@ -73,6 +74,17 @@ const Report: React.FC = () => {
     return true;
   });
 
+  const handleQuery = () => {
+    setDateRange(localDateRange);
+  };
+
+  const handleReset = () => {
+    setFilterTitle('');
+    setFilterLocation('');
+    setLocalDateRange(null);
+    setDateRange(null);
+  };
+
   const columns: ColumnsType<ReportRow> = [
     { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', width: 160, ellipsis: true, fixed: 'left' },
     { title: '作者', dataIndex: 'author', key: 'author', width: 100, ellipsis: true, render: (v: string | null) => v ?? '-' },
@@ -97,21 +109,23 @@ const Report: React.FC = () => {
       <Title level={4}>综合报表</Title>
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
       <Space style={{ marginBottom: 16 }} wrap>
-        <Input.Search
+        <Input
           placeholder="搜索书名"
           allowClear
           style={{ width: 200 }}
-          onSearch={setFilterTitle}
-          onChange={(e) => { if (!e.target.value) setFilterTitle(''); }}
+          value={filterTitle}
+          onChange={(e) => setFilterTitle(e.target.value)}
         />
-        <Input.Search
+        <Input
           placeholder="搜索位置"
           allowClear
           style={{ width: 200 }}
-          onSearch={setFilterLocation}
-          onChange={(e) => { if (!e.target.value) setFilterLocation(''); }}
+          value={filterLocation}
+          onChange={(e) => setFilterLocation(e.target.value)}
         />
-        <RangePicker value={dateRange} onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} allowClear />
+        <RangePicker value={localDateRange} onChange={(dates) => setLocalDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} allowClear />
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleQuery}>查询</Button>
+        <Button icon={<ReloadOutlined />} onClick={handleReset}>重置</Button>
       </Space>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
         <Space>
