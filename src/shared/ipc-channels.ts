@@ -118,6 +118,8 @@ export const EXPORT_CHANNELS = {
 export const IMPORT_CHANNELS = {
   TEMPLATE: 'import:template',
   BOOKS: 'import:books',
+  INBOUND_TEMPLATE: 'import:inboundTemplate',
+  INBOUND: 'import:inbound',
 } as const;
 
 // ============================================================

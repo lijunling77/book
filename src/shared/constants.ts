@@ -16,6 +16,12 @@ export const IMPORT_TEMPLATE_COLUMNS = ['书名', '作者', '描述'] as const;
 /** 导入模板必需列标题 */
 export const IMPORT_REQUIRED_COLUMNS = ['书名'] as const;
 
+/** 入库导入模板列标题 */
+export const INBOUND_IMPORT_TEMPLATE_COLUMNS = ['书名', '作者', '存放位置', '入库日期', '数量', '买入价格', '供应商'] as const;
+
+/** 入库导入必需列标题 */
+export const INBOUND_IMPORT_REQUIRED_COLUMNS = ['书名', '入库日期', '数量', '买入价格'] as const;
+
 // ============================================================
 // 盘点相关常量
 // ============================================================

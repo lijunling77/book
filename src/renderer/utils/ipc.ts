@@ -143,6 +143,8 @@ export const exportApi = {
 export const importApi = {
   template: (format: ImportFileFormat): Promise<string> => invoke(IMPORT_CHANNELS.TEMPLATE, format),
   books: (): Promise<ImportResultSummary> => invoke(IMPORT_CHANNELS.BOOKS),
+  inboundTemplate: (format: ImportFileFormat): Promise<string> => invoke(IMPORT_CHANNELS.INBOUND_TEMPLATE, format),
+  inbound: (): Promise<ImportResultSummary> => invoke(IMPORT_CHANNELS.INBOUND),
 };
 
 export const reportApi = {
