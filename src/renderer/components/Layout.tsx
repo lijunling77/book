@@ -19,7 +19,7 @@ const Layout: React.FC = () => {
         }}
       >
         <Typography.Title level={5} style={{ color: '#f0f4f8', margin: 0, fontWeight: 500 }}>
-          书籍管理系统
+          我们的书库
         </Typography.Title>
       </Header>
       <AntLayout>

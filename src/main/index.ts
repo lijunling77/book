@@ -50,7 +50,7 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    title: '书籍管理系统',
+    title: '我们的书库',
   });
 
   // In development, load from Vite dev server

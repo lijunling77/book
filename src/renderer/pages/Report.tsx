@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Table, DatePicker, Space, Spin, Alert, Button, message } from 'antd';
+import { Typography, Table, DatePicker, Space, Spin, Alert, Button, Input, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
@@ -37,6 +37,8 @@ const Report: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+  const [filterTitle, setFilterTitle] = useState('');
+  const [filterLocation, setFilterLocation] = useState('');
 
   const [exporting, setExporting] = useState(false);
 
@@ -65,6 +67,12 @@ const Report: React.FC = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const filteredData = data.filter((row) => {
+    if (filterTitle && !row.bookTitle.includes(filterTitle)) return false;
+    if (filterLocation && !(row.locations || '').includes(filterLocation)) return false;
+    return true;
+  });
+
   const columns: ColumnsType<ReportRow> = [
     { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle', width: 160, ellipsis: true, fixed: 'left' },
     { title: '作者', dataIndex: 'author', key: 'author', width: 100, ellipsis: true, render: (v: string | null) => v ?? '-' },
@@ -88,18 +96,31 @@ const Report: React.FC = () => {
     <div>
       <Title level={4}>综合报表</Title>
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
-      <Space style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between' }}>
-        <Space>
-          <span>日期范围筛选：</span>
-          <RangePicker value={dateRange} onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} allowClear />
-        </Space>
+      <Space style={{ marginBottom: 16 }} wrap>
+        <Input.Search
+          placeholder="搜索书名"
+          allowClear
+          style={{ width: 200 }}
+          onSearch={setFilterTitle}
+          onChange={(e) => { if (!e.target.value) setFilterTitle(''); }}
+        />
+        <Input.Search
+          placeholder="搜索位置"
+          allowClear
+          style={{ width: 200 }}
+          onSearch={setFilterLocation}
+          onChange={(e) => { if (!e.target.value) setFilterLocation(''); }}
+        />
+        <RangePicker value={dateRange} onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} allowClear />
+      </Space>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
         <Space>
           <Button icon={<DownloadOutlined />} loading={exporting} onClick={() => handleExport('xlsx')}>导出 Excel</Button>
           <Button icon={<DownloadOutlined />} loading={exporting} onClick={() => handleExport('csv')}>导出 CSV</Button>
         </Space>
-      </Space>
+      </div>
       {loading ? <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div> : (
-        <Table columns={columns} dataSource={data} rowKey={(_, index) => `report-${index}`} size="small" scroll={{ x: 1800 }} pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'], showTotal: (total) => `共 ${total} 条` }} />
+        <Table columns={columns} dataSource={filteredData} rowKey={(_, index) => `report-${index}`} size="small" scroll={{ x: 1800 }} pagination={{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'], showTotal: (total) => `共 ${total} 条` }} />
       )}
     </div>
   );
