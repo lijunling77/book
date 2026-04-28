@@ -1,0 +1,8 @@
+/* 全局表格样式：列内容不换行，支持横向滚动 */
+.ant-table-wrapper .ant-table {
+  overflow-x: auto;
+}
+
+.ant-table-wrapper .ant-table-cell {
+  white-space: nowrap;
+}

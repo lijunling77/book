@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
         <Col xs={24} sm={12} lg={6}><Card><Statistic title="本月利润" value={d.monthlyProfit} prefix={<DollarOutlined />} precision={2} suffix={CURRENCY_UNIT} valueStyle={d.monthlyProfit >= 0 ? { color: '#3f8600' } : { color: '#cf1322' }} /></Card></Col>
       </Row>
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24} lg={12}>
+        <Col xs={24}>
           <Card title="最近入库记录" size="small">
             <Table<RecentInboundItem>
               columns={inboundColumns}
@@ -55,7 +55,9 @@ const Dashboard: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} lg={12}>
+      </Row>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24}>
           <Card title="最近出库记录" size="small">
             <Table<RecentOutboundItem>
               columns={outboundColumns}
